@@ -1,0 +1,6 @@
+unittest:
+  platforms:
+    - leonardo
+  testfiles:
+    select:
+      - "*test.cpp"
