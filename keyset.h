@@ -68,9 +68,7 @@ class Keyset {
   void keysetLoop(std::function<void(char)> keyboardWrite);
 
   private:
-  void registerKeymap(char (&keymap)[32], bool (&modifiers)[32]);
-
-  void registerKeymap(char (&keymap)[32]);
+  void registerKeymap(Keymap* keymapToRegister);
 
   void initializeKeymap();
 

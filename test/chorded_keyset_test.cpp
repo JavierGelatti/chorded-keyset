@@ -6,9 +6,6 @@ const int keyPins[5] = {3,2,4,6,5};
 const int modeLeds[] = {7, 8, 9};
 
 Keyset keyset(keyPins, modeLeds);
-//this->keyPins[numKeys] = {2, 3, 4, 5, 6};
-//this->keyPins[numKeys] = {3,2,4,6,5};
-//this->keyPins[numKeys] = {5,6,4,2,3};
 
 GodmodeState* initialState() {
   auto state = GODMODE();
@@ -20,15 +17,15 @@ GodmodeState* initialState() {
 
 String writtenText = "";
 
-void press(int keyIndex, GodmodeState* state) {
-  state->digitalPin[keyPins[keyIndex]] = LOW;
+void press(int keyNumber, GodmodeState* state) {
+  state->digitalPin[keyPins[keyNumber-1]] = LOW;
   keyset.keysetLoop([&](char pressedChar) {
     if (pressedChar != '\0') writtenText += pressedChar;
   });
 }
 
-void release(int keyIndex, GodmodeState* state) {
-  state->digitalPin[keyPins[keyIndex]] = HIGH;
+void release(int keyNumber, GodmodeState* state) {
+  state->digitalPin[keyPins[keyNumber-1]] = HIGH;
   keyset.keysetLoop([&](char pressedChar) {
     if (pressedChar != '\0') writtenText += pressedChar;
   });
@@ -45,40 +42,40 @@ unittest(chorded_keyset) {
   assertEqual("", writtenText);
 
 
-  press(0, state);
-  release(0, state);
-
-  assertEqual("u", writtenText);
-  writtenText = "";
-
-
-  press(0, state);
-  press(1, state);
-  release(0, state);
-  release(1, state);
-
-  assertEqual("s", writtenText);
-  writtenText = "";
-
-
-  press(0, state);
   press(1, state);
   release(1, state);
-  release(0, state);
 
-  assertEqual("s", writtenText);
+  assertEqual("a", writtenText);
   writtenText = "";
 
 
+  press(5, state);
   press(4, state);
-  press(3, state);
-  press(2, state);
   release(4, state);
-  release(3, state);
-  release(2, state);
+  release(5, state);
 
-  press(0, state);
-  release(0, state);
+  assertEqual("s", writtenText);
+  writtenText = "";
+
+
+  press(5, state);
+  press(4, state);
+  release(5, state);
+  release(4, state);
+
+  assertEqual("s", writtenText);
+  writtenText = "";
+
+
+  press(1, state);
+  press(2, state);
+  press(3, state);
+  release(1, state);
+  release(2, state);
+  release(3, state);
+
+  press(5, state);
+  release(5, state);
 
   assertEqual("U", writtenText);
   writtenText = "";

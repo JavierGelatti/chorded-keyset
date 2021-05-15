@@ -1,20 +1,9 @@
 #include <limits.h>
 #include <Arduino.h>
 #include "keyset.h"
+#include "bit_manipulation.h"
 
 #define forindex(i, arraySize) for (int i = 0; i < arraySize; i++)
-
-void setBit(int &n, int k) {
-  n |= 1 << k;
-}
-
-void clearBit(int &n, int k) {
-  n &= ~(1 << k);
-}
-
-bool testBit(int n, int k) {
-  return (n & (1 << k)) != 0;
-}
 
 class Keymap {
   private:
@@ -22,10 +11,12 @@ class Keymap {
   SingleKeyKeymap* keymap[32];
 
   public:
+  Keymap(char (&keymap)[32]) {
+    bool noModifiers[32] = { false };
+    this->initialize(keymap, noModifiers);
+  }
   Keymap(char (&keymap)[32], bool (&modifierFlags)[32]) {
-    forindex(i, 32) {
-      this->keymap[i] = new SingleKeyKeymap(keymap[i], modifierFlags[i]);
-    }
+    this->initialize(keymap, modifierFlags);
   }
 
   char pressedCharFor(int pressedKeys) {
@@ -33,6 +24,13 @@ class Keymap {
   }
 
   private:
+
+  void initialize(char (&keymap)[32], bool (&modifierFlags)[32]) {
+    forindex(i, 32) {
+      this->keymap[i] = new SingleKeyKeymap(keymap[i], modifierFlags[i]);
+    }
+  }
+
   class SingleKeyKeymap {
     public:
     const char character;
@@ -43,46 +41,7 @@ class Keymap {
   };
 };
 
-const int shift = 0b00111;
-const int switchMode = 0b11100;
-
-#define forKeyPins(key) for (int key##Index = 0, key; key##Index < numKeys && (key = this->keyPins[key##Index], 1); key##Index ++)
-
-int Keyset::getNumberOfModes() {
-    return this->numberOfModes;
-}
-
-void Keyset::keysetSetup() {
-  initializeKeymap();
-
-  forKeyPins(keyPin) {
-    pinMode(keyPin, INPUT_PULLUP);
-  }
-  for (int i = 0; i < 3; i++) {
-    pinMode(this->modeLeds[i], OUTPUT);
-  }
-  pinMode(this->shiftLed, OUTPUT);
-}
-
-void Keyset::keysetLoop(std::function<void(char)> keyboardWrite) {
-  loopWithDelayForPress(keyboardWrite);
-
-  for (int i = 0; i < 3; i++) {
-    digitalWrite(this->modeLeds[i], testBit(this->mode+1, i));
-  }
-  digitalWrite(this->shiftLed, this->shiftActivated);
-}
-
-void Keyset::registerKeymap(char (&keymap)[32], bool (&modifiers)[32]) {
-  this->keymaps[this->numberOfModes++] = new Keymap(keymap, modifiers);
-}
-
-void Keyset::registerKeymap(char (&keymap)[32]) {
-  bool noModifiers[32] = { false };
-  registerKeymap(keymap, noModifiers);
-}
-
-void Keyset::initializeKeymap() {
+Keymap* normalKeymap() {
   // Normal keymap
   char keymap[32] = {0};
 
@@ -139,8 +98,10 @@ void Keyset::initializeKeymap() {
   // All fingers
   keymap[0b11111] = ' ';
 
-  registerKeymap(keymap);
+  return new Keymap(keymap);
+}
 
+Keymap* numberKeymap() {
   // Number keymap
   char numberKeymap[32] = {0};
 
@@ -160,7 +121,46 @@ void Keyset::initializeKeymap() {
 
   numberKeymap[0b11101] = KEY_ESC; // c
 
-  registerKeymap(numberKeymap);
+  return new Keymap(numberKeymap);
+}
+
+const int shift = 0b00111;
+const int switchMode = 0b11100;
+
+#define forKeyPins(key) for (int key##Index = 0, key; key##Index < numKeys && (key = this->keyPins[key##Index], 1); key##Index ++)
+
+int Keyset::getNumberOfModes() {
+    return this->numberOfModes;
+}
+
+void Keyset::keysetSetup() {
+  initializeKeymap();
+
+  forKeyPins(keyPin) {
+    pinMode(keyPin, INPUT_PULLUP);
+  }
+  for (int i = 0; i < 3; i++) {
+    pinMode(this->modeLeds[i], OUTPUT);
+  }
+  pinMode(this->shiftLed, OUTPUT);
+}
+
+void Keyset::keysetLoop(std::function<void(char)> keyboardWrite) {
+  loopWithDelayForPress(keyboardWrite);
+
+  for (int i = 0; i < 3; i++) {
+    digitalWrite(this->modeLeds[i], testBit(this->mode+1, i));
+  }
+  digitalWrite(this->shiftLed, this->shiftActivated);
+}
+
+void Keyset::registerKeymap(Keymap* keymapToRegister) {
+  this->keymaps[this->numberOfModes++] = keymapToRegister;
+}
+
+void Keyset::initializeKeymap() {
+  registerKeymap(normalKeymap());
+  registerKeymap(numberKeymap());
 }
 
 void Keyset::clearPressedKeys() {
@@ -197,7 +197,7 @@ void Keyset::loopWithDelayForPress(std::function<void(char)> keyboardWrite) {
   bool nothingPressed = true;
   forKeyPins(keyPin) {
     if (isBeingPressed(keyPin)) {
-      setBit(this->pressedKeys, numKeys - 1 - keyPinIndex); // Esto cambia entre izq y der
+      setBit(this->pressedKeys, keyPinIndex); // Esto cambia entre izq y der (numKeys-1-keyPinIndex)
       this->lastPressedKeyTimestamp = millis();
       nothingPressed = false;
     } else {
