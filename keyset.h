@@ -54,6 +54,51 @@ namespace std {
 #define KEY_F23         0xFA
 #define KEY_F24         0xFB
 
-void keysetLoop(std::function<void(char)> keyboardWrite);
-void keysetSetup();
-int getNumberOfModes();
+#define numKeys 5
+#define maxNumberOfModes 8
+
+class Keymap;
+
+class Keyset {
+  public:
+  Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3]);
+
+  int getNumberOfModes();
+  void keysetSetup();
+  void keysetLoop(std::function<void(char)> keyboardWrite);
+
+  private:
+  void registerKeymap(char (&keymap)[32], bool (&modifiers)[32]);
+
+  void registerKeymap(char (&keymap)[32]);
+
+  void initializeKeymap();
+
+  void clearPressedKeys();
+
+  void clearPressedKey(int keyIndex);
+
+  bool isBeingPressed(int keyPin);
+
+  bool wasPressed(int keyIndex);
+
+  long ellapsedTimeFrom(long milliseconds);
+
+  void loopWithDelayForPress(std::function<void(char)> keyboardWrite);
+
+  private:
+  const int keyPins[numKeys];
+
+  int pressedKeys;
+  long lastPressedKeyTimestamp;
+  long lastReleasedKeyTimestamp;
+  bool shiftActivated;
+  bool numberMode;
+
+  int mode;
+  const int modeLeds[3];
+  const int shiftLed;
+
+  int numberOfModes;
+  Keymap* keymaps[maxNumberOfModes];
+};

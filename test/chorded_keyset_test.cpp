@@ -5,6 +5,11 @@
 const int keyPins[5] = {3,2,4,6,5};
 const int modeLeds[] = {7, 8, 9};
 
+Keyset keyset(keyPins, modeLeds);
+//this->keyPins[numKeys] = {2, 3, 4, 5, 6};
+//this->keyPins[numKeys] = {3,2,4,6,5};
+//this->keyPins[numKeys] = {5,6,4,2,3};
+
 GodmodeState* initialState() {
   auto state = GODMODE();
   for (int i = 0; i < 5; i++) {
@@ -17,14 +22,14 @@ String writtenText = "";
 
 void press(int keyIndex, GodmodeState* state) {
   state->digitalPin[keyPins[keyIndex]] = LOW;
-  keysetLoop([&](char pressedChar) {
+  keyset.keysetLoop([&](char pressedChar) {
     if (pressedChar != '\0') writtenText += pressedChar;
   });
 }
 
 void release(int keyIndex, GodmodeState* state) {
   state->digitalPin[keyPins[keyIndex]] = HIGH;
-  keysetLoop([&](char pressedChar) {
+  keyset.keysetLoop([&](char pressedChar) {
     if (pressedChar != '\0') writtenText += pressedChar;
   });
 }
@@ -33,13 +38,9 @@ unittest(chorded_keyset) {
   // setup_initializes_the_modes
   auto state = initialState();
 
-  keysetSetup();
+  keyset.keysetSetup();
 
-  assertEqual(2, getNumberOfModes());
-
-  keysetLoop([&](char pressedChar) {
-    writtenText += pressedChar;
-  });
+  assertEqual(2, keyset.getNumberOfModes());
 
   assertEqual("", writtenText);
 
