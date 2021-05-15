@@ -62,6 +62,7 @@ class Keymap;
 class Keyset {
   public:
   Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3]);
+  ~Keyset();
 
   int getNumberOfModes();
   void keysetSetup();

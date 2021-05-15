@@ -1,104 +1,119 @@
 #include <ArduinoUnitTests.h>
 #include <Godmode.h>
 #include "../keyset.h"
+#include <initializer_list>
 
 const int keyPins[5] = {3,2,4,6,5};
 const int modeLeds[] = {7, 8, 9};
 
-Keyset keyset(keyPins, modeLeds);
+class KeysetBoard {
+  public:
+  KeysetBoard() {
+    this->keyset = new Keyset(keyPins, modeLeds);
 
-GodmodeState* initialState() {
-  auto state = GODMODE();
-  for (int i = 0; i < 5; i++) {
-    state->digitalPin[keyPins[i]] = HIGH;
+    this->boardState = GODMODE();
+    for (int i = 0; i < 5; i++) {
+      this->boardState->digitalPin[keyPins[i]] = HIGH;
+    }
   }
-  return state;
-}
+  ~KeysetBoard() {
+    delete this->keyset;
+  }
 
-String writtenText = "";
+  void start() {
+    keyset->keysetSetup();
+  }
 
-void press(int keyNumber, GodmodeState* state) {
-  state->digitalPin[keyPins[keyNumber-1]] = LOW;
-  keyset.keysetLoop([&](char pressedChar) {
-    if (pressedChar != '\0') writtenText += pressedChar;
-  });
-}
+  void press(int keyNumber) {
+    boardState->digitalPin[keyPins[keyNumber-1]] = LOW;
+    keyset->keysetLoop([&](char pressedChar) {
+      if (pressedChar != '\0') writtenText += pressedChar;
+    });
+  }
 
-void release(int keyNumber, GodmodeState* state) {
-  state->digitalPin[keyPins[keyNumber-1]] = HIGH;
-  keyset.keysetLoop([&](char pressedChar) {
-    if (pressedChar != '\0') writtenText += pressedChar;
-  });
-}
+  void release(int keyNumber) {
+    boardState->digitalPin[keyPins[keyNumber-1]] = HIGH;
+    keyset->keysetLoop([&](char pressedChar) {
+      if (pressedChar != '\0') writtenText += pressedChar;
+    });
+  }
 
-unittest(chorded_keyset) {
-  // setup_initializes_the_modes
-  auto state = initialState();
+  void chord(std::initializer_list<int> keys) {
+    for (auto key: keys) {
+      press(key);
+    }
+    for (auto key: keys) {
+      release(key);
+    }
+  }
 
-  keyset.keysetSetup();
+  String getWrittenText() {
+    String temp = writtenText;
+    writtenText = "";
+    return temp;
+  }
+
+  int getNumberOfModes() {
+    return keyset->getNumberOfModes();
+  }
+
+  private:
+  GodmodeState* boardState;
+  Keyset* keyset;
+  String writtenText = "";
+};
+
+unittest(setup_initializes_the_modes) {
+  KeysetBoard keyset;
+
+  keyset.start();
 
   assertEqual(2, keyset.getNumberOfModes());
+  assertEqual("", keyset.getWrittenText());
+}
 
-  assertEqual("", writtenText);
+unittest(can_type_by_single_press) {
+  KeysetBoard keyset;
+  keyset.start();
 
+  keyset.press(1);
+  keyset.release(1);
 
-  press(1, state);
-  release(1, state);
+  assertEqual("a", keyset.getWrittenText());
+}
 
-  assertEqual("a", writtenText);
-  writtenText = "";
+unittest(can_type_chord_by_nesting_key_presses) {
+  KeysetBoard keyset;
+  keyset.start();
 
+  keyset.press(5);
+  keyset.press(4);
+  keyset.release(4);
+  keyset.release(5);
 
-  press(5, state);
-  press(4, state);
-  release(4, state);
-  release(5, state);
+  assertEqual("s", keyset.getWrittenText());
+}
 
-  assertEqual("s", writtenText);
-  writtenText = "";
+unittest(can_type_chord_by_intertwining_key_presses) {
+  KeysetBoard keyset;
+  keyset.start();
 
+  keyset.press(5);
+  keyset.press(4);
+  keyset.release(5);
+  keyset.release(4);
 
-  press(5, state);
-  press(4, state);
-  release(5, state);
-  release(4, state);
+  assertEqual("s", keyset.getWrittenText());
+}
 
-  assertEqual("s", writtenText);
-  writtenText = "";
+unittest(shift_mode_can_be_used_to_write_in_uppercase) {
+  KeysetBoard keyset;
+  keyset.start();
 
+  keyset.chord({1, 2, 3});
+  keyset.chord({5});
 
-  press(1, state);
-  press(2, state);
-  press(3, state);
-  release(1, state);
-  release(2, state);
-  release(3, state);
-
-  press(5, state);
-  release(5, state);
-
-  assertEqual("U", writtenText);
-  writtenText = "";
-
-  //
-  // pin history is queued in case we want to analyze it later.
-  // we expect 6 values in that queue (5 that we set plus one
-  // initial value), which we'll hard-code here for convenience.
-  // (we'll actually assert those 6 values in the next block)
-//   assertEqual(6, state->digitalPin[1].queueSize());
-//   bool expected[6] = {LOW, HIGH, LOW, LOW, HIGH, HIGH};
-//   bool actual[6];
-
-//   // convert history queue into an array so we can verify it.
-//   // while we're at it, check that we received the amount of
-//   // elements that we expected.
-//   int numMoved = state->digitalPin[myPin].toArray(actual, 6);
-//   assertEqual(6, numMoved);
-
-//   // verify each element
-//   for (int i = 0; i < 6; ++i) {
-//     assertEqual(expected[i], actual[i]);
-//   }
+  assertEqual("U", keyset.getWrittenText());
 }
 
 unittest_main()

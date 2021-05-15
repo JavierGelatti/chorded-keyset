@@ -18,6 +18,11 @@ class Keymap {
   Keymap(char (&keymap)[32], bool (&modifierFlags)[32]) {
     this->initialize(keymap, modifierFlags);
   }
+  ~Keymap() {
+    forindex(i, 32) {
+      delete this->keymap[i];
+    }
+  }
 
   char pressedCharFor(int pressedKeys) {
     return keymap[pressedKeys]->character;
@@ -232,4 +237,10 @@ Keyset::Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3])
   this->numberMode = false;
   this->mode = 0;
   this->numberOfModes = 0;
+}
+
+Keyset::~Keyset() {
+  forindex(i, numberOfModes) {
+    delete keymaps[i];
+  }
 }
