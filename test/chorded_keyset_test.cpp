@@ -1,70 +1,8 @@
 #include <ArduinoUnitTests.h>
-#include <Godmode.h>
-#include "../keyset.h"
-#include <initializer_list>
-
-const int keyPins[5] = {3,2,4,6,5};
-const int modeLeds[] = {7, 8, 9};
-
-class KeysetBoard {
-  public:
-  KeysetBoard() {
-    this->keyset = new Keyset(keyPins, modeLeds);
-
-    this->boardState = GODMODE();
-    for (int i = 0; i < 5; i++) {
-      this->boardState->digitalPin[keyPins[i]] = HIGH;
-    }
-  }
-  ~KeysetBoard() {
-    delete this->keyset;
-  }
-
-  void start() {
-    keyset->keysetSetup();
-  }
-
-  void press(int keyNumber) {
-    boardState->digitalPin[keyPins[keyNumber-1]] = LOW;
-    keyset->keysetLoop([&](char pressedChar) {
-      if (pressedChar != '\0') writtenText += pressedChar;
-    });
-  }
-
-  void release(int keyNumber) {
-    boardState->digitalPin[keyPins[keyNumber-1]] = HIGH;
-    keyset->keysetLoop([&](char pressedChar) {
-      if (pressedChar != '\0') writtenText += pressedChar;
-    });
-  }
-
-  void chord(std::initializer_list<int> keys) {
-    for (auto key: keys) {
-      press(key);
-    }
-    for (auto key: keys) {
-      release(key);
-    }
-  }
-
-  String getWrittenText() {
-    String temp = writtenText;
-    writtenText = "";
-    return temp;
-  }
-
-  int getNumberOfModes() {
-    return keyset->getNumberOfModes();
-  }
-
-  private:
-  GodmodeState* boardState;
-  Keyset* keyset;
-  String writtenText = "";
-};
+#include "keyset_simulator.cpp"
 
 unittest(setup_initializes_the_modes) {
-  KeysetBoard keyset;
+  KeysetSimulator keyset;
 
   keyset.start();
 
@@ -73,7 +11,7 @@ unittest(setup_initializes_the_modes) {
 }
 
 unittest(can_type_by_single_press) {
-  KeysetBoard keyset;
+  KeysetSimulator keyset;
   keyset.start();
 
   keyset.press(1);
@@ -83,7 +21,7 @@ unittest(can_type_by_single_press) {
 }
 
 unittest(can_type_chord_by_nesting_key_presses) {
-  KeysetBoard keyset;
+  KeysetSimulator keyset;
   keyset.start();
 
   keyset.press(5);
@@ -95,7 +33,7 @@ unittest(can_type_chord_by_nesting_key_presses) {
 }
 
 unittest(can_type_chord_by_intertwining_key_presses) {
-  KeysetBoard keyset;
+  KeysetSimulator keyset;
   keyset.start();
 
   keyset.press(5);
@@ -107,11 +45,11 @@ unittest(can_type_chord_by_intertwining_key_presses) {
 }
 
 unittest(shift_mode_can_be_used_to_write_in_uppercase) {
-  KeysetBoard keyset;
+  KeysetSimulator keyset;
   keyset.start();
 
-  keyset.chord({1, 2, 3});
-  keyset.chord({5});
+  keyset.chord({ 1, 2, 3 });
+  keyset.chord({ 5 });
 
   assertEqual("U", keyset.getWrittenText());
 }
