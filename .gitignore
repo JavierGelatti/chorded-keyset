@@ -1,3 +1,6 @@
 # arduino_ci unit test binaries and artifacts
 *.bin
 *.bin.dSYM
+
+# functional-avr repo files
+functional-avr/

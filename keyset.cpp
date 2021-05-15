@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <Arduino.h>
+#include "keyset.h"
 
 #define KEY_LEFT_CTRL   0x80
 #define KEY_LEFT_SHIFT    0x81
@@ -52,7 +53,10 @@
 
 #define numKeys 5
 
-const int keyPins[numKeys] = {2, 3, 4, 5, 6};
+//const int keyPins[numKeys] = {2, 3, 4, 5, 6};
+const int keyPins[numKeys] = {3,2,4,6,5};
+//const int keyPins[numKeys] = {5,6,4,2,3};
+
 int pressedKeys = 0;
 long lastPressedKeyTimestamp = LONG_MAX;
 long lastReleasedKeyTimestamp = 0;
@@ -109,6 +113,10 @@ class Keymap {
 int numberOfModes = 0;
 const int maxNumberOfModes = 8;
 Keymap* keymaps[maxNumberOfModes];
+
+int getNumberOfModes() {
+    return numberOfModes;
+}
 
 const int shift = 0b00111;
 const int switchMode = 0b11100;
@@ -263,9 +271,9 @@ void printArray(char array[], int size) {
   Serial.println("]");
 }
 
-void loopWithDelayForPress(void (*keyboardWrite)(char));
+void loopWithDelayForPress(std::function<void(char)>);
 
-void keysetLoop(void (*keyboardWrite)(char)) {
+void keysetLoop(std::function<void(char)> keyboardWrite) {
   loopWithDelayForPress(keyboardWrite);
 
   for (int i = 0; i < 3; i++) {
@@ -274,13 +282,14 @@ void keysetLoop(void (*keyboardWrite)(char)) {
   digitalWrite(shiftLed, shiftActivated);
 }
 
-void loopWithDelayForPress(void (*keyboardWrite)(char)) {
+void loopWithDelayForPress(std::function<void(char)> keyboardWrite) {
   bool nothingPressed = true;
   forKeyPins(keyPin) {
     if (isBeingPressed(keyPin)) {
       setBit(pressedKeys, numKeys - 1 - keyPinIndex); // Esto cambia entre izq y der
       lastPressedKeyTimestamp = millis();
       nothingPressed = false;
+    } else {
     }
   }
 
