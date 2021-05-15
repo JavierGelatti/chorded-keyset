@@ -2,74 +2,36 @@
 #include <Arduino.h>
 #include "keyset.h"
 
-#define KEY_LEFT_CTRL   0x80
-#define KEY_LEFT_SHIFT    0x81
-#define KEY_LEFT_ALT    0x82
-#define KEY_LEFT_GUI    0x83
-#define KEY_RIGHT_CTRL    0x84
-#define KEY_RIGHT_SHIFT   0x85
-#define KEY_RIGHT_ALT   0x86
-#define KEY_RIGHT_GUI   0x87
-
-#define KEY_UP_ARROW    0xDA
-#define KEY_DOWN_ARROW    0xD9
-#define KEY_LEFT_ARROW    0xD8
-#define KEY_RIGHT_ARROW   0xD7
-#define KEY_BACKSPACE   0xB2
-#define KEY_TAB       0xB3
-#define KEY_RETURN      0xB0
-#define KEY_ESC       0xB1
-#define KEY_INSERT      0xD1
-#define KEY_DELETE      0xD4
-#define KEY_PAGE_UP     0xD3
-#define KEY_PAGE_DOWN   0xD6
-#define KEY_HOME      0xD2
-#define KEY_END       0xD5
-#define KEY_CAPS_LOCK   0xC1
-#define KEY_F1        0xC2
-#define KEY_F2        0xC3
-#define KEY_F3        0xC4
-#define KEY_F4        0xC5
-#define KEY_F5        0xC6
-#define KEY_F6        0xC7
-#define KEY_F7        0xC8
-#define KEY_F8        0xC9
-#define KEY_F9        0xCA
-#define KEY_F10       0xCB
-#define KEY_F11       0xCC
-#define KEY_F12       0xCD
-#define KEY_F13       0xF0
-#define KEY_F14       0xF1
-#define KEY_F15       0xF2
-#define KEY_F16       0xF3
-#define KEY_F17       0xF4
-#define KEY_F18       0xF5
-#define KEY_F19       0xF6
-#define KEY_F20       0xF7
-#define KEY_F21       0xF8
-#define KEY_F22       0xF9
-#define KEY_F23       0xFA
-#define KEY_F24       0xFB
-
 #define numKeys 5
+#define maxNumberOfModes 8
 
-//const int keyPins[numKeys] = {2, 3, 4, 5, 6};
-const int keyPins[numKeys] = {3,2,4,6,5};
-//const int keyPins[numKeys] = {5,6,4,2,3};
+class Keymap;
 
-int pressedKeys = 0;
-long lastPressedKeyTimestamp = LONG_MAX;
-long lastReleasedKeyTimestamp = 0;
-bool shiftActivated = false;
-bool numberMode = false;
+class Keyset {
+  public:
+  //const int keyPins[numKeys] = {2, 3, 4, 5, 6};
+  const int keyPins[numKeys] = {3,2,4,6,5};
+  //const int keyPins[numKeys] = {5,6,4,2,3};
 
-int mode = 0;
+  int pressedKeys = 0;
+  long lastPressedKeyTimestamp = LONG_MAX;
+  long lastReleasedKeyTimestamp = 0;
+  bool shiftActivated = false;
+  bool numberMode = false;
 
-#define forKeyPins(key) for (int key##Index = 0, key; key##Index < numKeys && (key = keyPins[key##Index], 1); key##Index ++)
+  int mode = 0;
+  const int modeLeds[3] = {7, 8, 9};
+  const int shiftLed = 10;
+
+  int numberOfModes = 0;
+  Keymap* keymaps[maxNumberOfModes];
+};
+
+Keyset keyset;
+
+#define forKeyPins(key) for (int key##Index = 0, key; key##Index < numKeys && (key = keyset.keyPins[key##Index], 1); key##Index ++)
 #define forindex(i, arraySize) for (int i = 0; i < arraySize; i++)
 
-const int modeLeds[] = {7, 8, 9};
-const int shiftLed = 10;
 
 void setBit(int &n, int k) {
   n |= 1 << k;
@@ -110,19 +72,16 @@ class Keymap {
   };
 };
 
-int numberOfModes = 0;
-const int maxNumberOfModes = 8;
-Keymap* keymaps[maxNumberOfModes];
 
 int getNumberOfModes() {
-    return numberOfModes;
+    return keyset.numberOfModes;
 }
 
 const int shift = 0b00111;
 const int switchMode = 0b11100;
 
 void registerKeymap(char (&keymap)[32], bool (&modifiers)[32]) {
-  keymaps[numberOfModes++] = new Keymap(keymap, modifiers);
+  keyset.keymaps[keyset.numberOfModes++] = new Keymap(keymap, modifiers);
 }
 
 void registerKeymap(char (&keymap)[32]) {
@@ -218,18 +177,18 @@ void keysetSetup() {
     pinMode(keyPin, INPUT_PULLUP);
   }
   for (int i = 0; i < 3; i++) {
-    pinMode(modeLeds[i], OUTPUT);
+    pinMode(keyset.modeLeds[i], OUTPUT);
   }
-  pinMode(shiftLed, OUTPUT);
+  pinMode(keyset.shiftLed, OUTPUT);
 }
 
 void clearPressedKeys() {
-  pressedKeys = 0;
-  lastPressedKeyTimestamp = LONG_MAX;
+  keyset.pressedKeys = 0;
+  keyset.lastPressedKeyTimestamp = LONG_MAX;
 }
 
 void clearPressedKey(int keyIndex) {
-  clearBit(pressedKeys, keyIndex);
+  clearBit(keyset.pressedKeys, keyIndex);
 }
 
 bool isBeingPressed(int keyPin) {
@@ -246,29 +205,11 @@ bool isBeingPressed(int keyPin) {
 }
 
 bool wasPressed(int keyIndex) {
-  return testBit(pressedKeys, keyIndex);
+  return testBit(keyset.pressedKeys, keyIndex);
 }
 
 long ellapsedTimeFrom(long milliseconds) {
   return millis() - milliseconds;
-}
-
-void printArray(int array[], int size) {
-  Serial.print("[");
-  for (int i = 0; i < size; i++) {
-    Serial.print(array[i]);
-    if (i < size-1) Serial.print(", ");
-  }
-  Serial.println("]");
-}
-
-void printArray(char array[], int size) {
-  Serial.print("[");
-  for (int i = 0; i < size; i++) {
-    Serial.print(array[i]);
-    if (i < size-1) Serial.print(", ");
-  }
-  Serial.println("]");
 }
 
 void loopWithDelayForPress(std::function<void(char)>);
@@ -277,97 +218,34 @@ void keysetLoop(std::function<void(char)> keyboardWrite) {
   loopWithDelayForPress(keyboardWrite);
 
   for (int i = 0; i < 3; i++) {
-    digitalWrite(modeLeds[i], testBit(mode+1, i));
+    digitalWrite(keyset.modeLeds[i], testBit(keyset.mode+1, i));
   }
-  digitalWrite(shiftLed, shiftActivated);
+  digitalWrite(keyset.shiftLed, keyset.shiftActivated);
 }
 
 void loopWithDelayForPress(std::function<void(char)> keyboardWrite) {
   bool nothingPressed = true;
   forKeyPins(keyPin) {
     if (isBeingPressed(keyPin)) {
-      setBit(pressedKeys, numKeys - 1 - keyPinIndex); // Esto cambia entre izq y der
-      lastPressedKeyTimestamp = millis();
+      setBit(keyset.pressedKeys, numKeys - 1 - keyPinIndex); // Esto cambia entre izq y der
+      keyset.lastPressedKeyTimestamp = millis();
       nothingPressed = false;
     } else {
     }
   }
 
-  if (nothingPressed && pressedKeys != 0) {
+  if (nothingPressed && keyset.pressedKeys != 0) {
     char pressedChar;
-    pressedChar = keymaps[mode]->pressedCharFor(pressedKeys);
-    if (shiftActivated) pressedChar = toupper(pressedChar);
+    pressedChar = keyset.keymaps[keyset.mode]->pressedCharFor(keyset.pressedKeys);
+    if (keyset.shiftActivated) pressedChar = toupper(pressedChar);
 
     keyboardWrite(pressedChar);
 
-    if (pressedKeys == shift) {
-      shiftActivated = !shiftActivated;
-    } else if (pressedKeys == switchMode) {
-      mode = (mode + 1) % numberOfModes;
+    if (keyset.pressedKeys == shift) {
+      keyset.shiftActivated = !keyset.shiftActivated;
+    } else if (keyset.pressedKeys == switchMode) {
+      keyset.mode = (keyset.mode + 1) % keyset.numberOfModes;
     }
     clearPressedKeys();
-  }
-}
-
-void loopWithDelayForPress2() {
-  forKeyPins(keyPin) {
-    if (isBeingPressed(keyPin)) {
-      setBit(pressedKeys, numKeys - 1 - keyPinIndex);
-      lastPressedKeyTimestamp = millis();
-    }
-    //Serial.print(keyPinIndex);
-    //Serial.print(":");
-    //Serial.println(digitalRead(keyPin));
-  }
-
-  if (ellapsedTimeFrom(lastPressedKeyTimestamp) > 20) {
-    //Serial.println(pressedKeys);
-
-    char pressedChar;
-    pressedChar = keymaps[mode]->pressedCharFor(pressedKeys);
-    if (shiftActivated) pressedChar = toupper(pressedChar);
-
-    //Serial.println(pressedChar);
-    //Keyboard.write(pressedChar);
-
-    if (pressedKeys == shift) {
-      shiftActivated = !shiftActivated;
-    } else if (pressedKeys == switchMode) {
-      mode = (mode + 1) % numberOfModes;
-
-      //Keyboard.press(KEY_LEFT_ALT);
-      //Keyboard.write(KEY_TAB);
-      //Keyboard.release(KEY_LEFT_ALT);
-
-    }
-    clearPressedKeys();
-  }
-  //delay(100);
-}
-
-void loopWithKeyUpTrigger() {
-  forKeyPins(keyPin) {
-    bool beingPressed = isBeingPressed(keyPin);
-    if (beingPressed && !wasPressed(keyPinIndex)) {
-      //Serial.print("Pushed: ");
-      //Serial.println(keyPinIndex);
-      setBit(pressedKeys, keyPinIndex);
-      lastPressedKeyTimestamp = millis();
-    } else if (!beingPressed && wasPressed(keyPinIndex)) {
-      //Serial.print("Released: ");
-      //Serial.println(keyPinIndex);
-      long x = ellapsedTimeFrom(lastReleasedKeyTimestamp);
-      if (x > 50) {
-        //Serial.print("Chorded: ");
-        //Serial.print(pressedKeys);
-        //Serial.print(", ");
-        Serial.print(keymaps[mode]->pressedCharFor(pressedKeys));
-      } else {
-        //Serial.print("Not chorded: ");
-        //Serial.println(x);
-      }
-      clearPressedKey(keyPinIndex);
-      lastReleasedKeyTimestamp = millis();
-    }
   }
 }
