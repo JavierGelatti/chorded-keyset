@@ -61,12 +61,12 @@ class Keymap;
 
 class Keyset {
   public:
-  Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3]);
+  Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3], const std::function<void(char)> keyboardWrite);
   ~Keyset();
 
   int getNumberOfModes();
   void keysetSetup();
-  void keysetLoop(std::function<void(char)> keyboardWrite);
+  void keysetLoop();
 
   private:
   void registerKeymap(Keymap* keymapToRegister);
@@ -83,7 +83,7 @@ class Keyset {
 
   long ellapsedTimeFrom(long milliseconds);
 
-  void loopWithDelayForPress(std::function<void(char)> keyboardWrite);
+  void loopWithDelayForPress();
 
   private:
   const int keyPins[numKeys];
@@ -100,4 +100,5 @@ class Keyset {
 
   int numberOfModes;
   Keymap* keymaps[maxNumberOfModes];
+  const std::function<void(char)> keyboardWrite;
 };

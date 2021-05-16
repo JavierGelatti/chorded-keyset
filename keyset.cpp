@@ -150,8 +150,8 @@ void Keyset::keysetSetup() {
   pinMode(this->shiftLed, OUTPUT);
 }
 
-void Keyset::keysetLoop(std::function<void(char)> keyboardWrite) {
-  loopWithDelayForPress(keyboardWrite);
+void Keyset::keysetLoop() {
+  loopWithDelayForPress();
 
   for (int i = 0; i < 3; i++) {
     digitalWrite(this->modeLeds[i], testBit(this->mode+1, i));
@@ -198,7 +198,7 @@ long Keyset::ellapsedTimeFrom(long milliseconds) {
   return millis() - milliseconds;
 }
 
-void Keyset::loopWithDelayForPress(std::function<void(char)> keyboardWrite) {
+void Keyset::loopWithDelayForPress() {
   bool nothingPressed = true;
   forKeyPins(keyPin) {
     if (isBeingPressed(keyPin)) {
@@ -214,7 +214,7 @@ void Keyset::loopWithDelayForPress(std::function<void(char)> keyboardWrite) {
     pressedChar = this->keymaps[this->mode]->pressedCharFor(this->pressedKeys);
     if (this->shiftActivated) pressedChar = toupper(pressedChar);
 
-    keyboardWrite(pressedChar);
+    if (pressedChar != '\0') keyboardWrite(pressedChar);
 
     if (this->pressedKeys == shift) {
       this->shiftActivated = !this->shiftActivated;
@@ -225,11 +225,12 @@ void Keyset::loopWithDelayForPress(std::function<void(char)> keyboardWrite) {
   }
 }
 
-Keyset::Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3])
+Keyset::Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3], const std::function<void(char)> keyboardWrite)
   // We initialize the arrays like this to avoid an "array as initializer" error
   : keyPins{keyPins[0], keyPins[1], keyPins[2], keyPins[3], keyPins[4]},
     modeLeds{modeLeds[0], modeLeds[1], modeLeds[2]},
-    shiftLed(10) {
+    shiftLed(10),
+    keyboardWrite(keyboardWrite) {
   this->pressedKeys = 0;
   this->lastPressedKeyTimestamp = LONG_MAX;
   this->lastReleasedKeyTimestamp = 0;

@@ -8,7 +8,9 @@ const int modeLeds[3] = {7, 8, 9};
 class KeysetSimulator {
   public:
   KeysetSimulator() {
-    this->keyset = new Keyset(keyPins, modeLeds);
+    this->keyset = new Keyset(keyPins, modeLeds, [&](char pressedChar) {
+      writtenText += pressedChar;
+    });
 
     this->boardState = GODMODE();
     for (int i = 0; i < 5; i++) {
@@ -25,16 +27,12 @@ class KeysetSimulator {
 
   void press(int keyNumber) {
     boardState->digitalPin[keyPins[keyNumber-1]] = LOW;
-    keyset->keysetLoop([&](char pressedChar) {
-      if (pressedChar != '\0') writtenText += pressedChar;
-    });
+    keyset->keysetLoop();
   }
 
   void release(int keyNumber) {
     boardState->digitalPin[keyPins[keyNumber-1]] = HIGH;
-    keyset->keysetLoop([&](char pressedChar) {
-      if (pressedChar != '\0') writtenText += pressedChar;
-    });
+    keyset->keysetLoop();
   }
 
   void chord(std::initializer_list<int> keys) {
