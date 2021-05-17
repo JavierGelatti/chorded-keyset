@@ -4,6 +4,7 @@ GEM
     arduino_ci (1.3.0)
       os (~> 1.0)
       rubyzip (~> 1.2)
+    fast_trie (0.5.1)
     os (1.1.1)
     rubyzip (1.3.0)
 
@@ -12,6 +13,7 @@ PLATFORMS
 
 DEPENDENCIES
   arduino_ci
+  fast_trie
 
 BUNDLED WITH
    2.2.16

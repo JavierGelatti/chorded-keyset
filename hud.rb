@@ -1,9 +1,13 @@
 require_relative 'command_processor'
 require 'io/console'
 
+commands = {
+  "Delete Word" => "Control_L+Left Shift+Control_L+Right Delete",
+}
+
 display = ->(line) { STDOUT.write("#{line}\n") }
 macro_runner = ->(macro) { `xdotool key #{macro}` }
-command_processor = CommandProcessor.new(display, macro_runner)
+command_processor = CommandProcessor.new(display, macro_runner, commands)
 
 STDOUT.sync = true
 
