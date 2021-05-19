@@ -1,0 +1,9 @@
+general:
+  Delete Word: Control_L+Left Shift+Control_L+Right Delete
+  Undo: Control_L+z
+  Redo: Control_L+Shift+z
+  Switch windowS: Alt_L+Tab
+
+app_specific:
+  firefox:
+    Switch Tab: Control_L+Tab

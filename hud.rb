@@ -1,13 +1,8 @@
 require_relative 'command_processor'
 require 'io/console'
+require 'yaml'
 
-commands = {
-  "Delete Word" => "Control_L+Left Shift+Control_L+Right Delete",
-  "Undo" => "Control_L+z",
-  "Redo" => "Control_L+Shift+z",
-  "Switch windowS" => "Alt_L+Tab",
-  "Switch Workspace" => "Control_L+Alt+Right",
-}
+commands = YAML::load(File.open("chords.yml"))
 
 display = ->(line) { STDOUT.write("#{line}\n") }
 macro_runner = ->(macro) { `xdotool key #{macro}` }

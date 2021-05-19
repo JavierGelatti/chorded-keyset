@@ -177,6 +177,6 @@ describe 'command processor' do
   end
 
   def command_processor_for_commands(commands)
-    CommandProcessor.for(display, macro_runner, -> { active_app }, commands)
+    CommandProcessor.for(display, macro_runner, -> { active_app }, commands.transform_keys(&:to_s))
   end
 end

@@ -2,9 +2,9 @@ require 'trie'
 
 class CommandProcessor
   def self.for(display, macro_runner, active_app_supplier, commands)
-    general_commands = commands.fetch(:general, {})
+    general_commands = commands.fetch("general", {})
     app_specific_commands = commands.
-      fetch(:app_specific, {}).
+      fetch("app_specific", {}).
       transform_values do |commands_just_for_app|
         general_commands.merge(commands_just_for_app)
       end
