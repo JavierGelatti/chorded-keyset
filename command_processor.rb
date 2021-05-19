@@ -1,11 +1,5 @@
 require 'trie'
 
-class Hash
-  def keys_for(a_value)
-    select { |*, value| a_value == value }.map { |key, *| key }
-  end
-end
-
 class CommandProcessor
   def self.for(display, macro_runner, active_app_supplier, commands)
     general_commands = commands.fetch(:general, {})
@@ -83,11 +77,16 @@ class FocusedCommandProcessor
 
   def assert_no_duplicated_chords_in(sequences)
     sequences.values.
-      map { |sequence| [sequence, sequences.keys_for(sequence)] }.
+      map { |sequence| [sequence, commands_for(chord: sequence, on: sequences)] }.
       filter { |sequence, command_names| command_names.size > 1 }.
       any? do |sequence, command_names|
         raise "The chord #{sequence.upcase} is associated with many commands: #{command_names.join(", ")}"
       end
+  end
+
+  def commands_for(chord:, on:)
+    command_names = on
+    command_names.select { |*, command_chord| command_chord.start_with?(chord) }.map { |name, *| name }
   end
 
   def command_names

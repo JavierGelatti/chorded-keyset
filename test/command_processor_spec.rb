@@ -89,6 +89,17 @@ describe 'command processor' do
     end.to raise_error("The chord DW is associated with many commands: Delete Word, Do Work")
   end
 
+  it 'fails if more than one command has the same chord prefix' do
+    expect do
+      command_processor_for_commands(
+        general: {
+          "Delete Word" => "d+w",
+          "Do Work Once" => "d+w+o",
+        }
+      )
+    end.to raise_error("The chord DW is associated with many commands: Delete Word, Do Work Once")
+  end
+
   context 'when there are app-specific commands' do
     let(:commands) do
       {
@@ -105,7 +116,7 @@ describe 'command processor' do
       }
     end
 
-    it 'fails if more than one command has the same associated chord' do
+    it 'fails if more than one command has the same associated chord, including the app name in the error' do
       expect do
         command_processor_for_commands(
           app_specific: {
