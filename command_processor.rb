@@ -8,7 +8,7 @@ end
 
 class CommandProcessor
   def self.for(display, macro_runner, active_app_supplier, commands)
-    general_commands = commands[:general]
+    general_commands = commands.fetch(:general, {})
     app_specific_commands = commands.
       fetch(:app_specific, {}).
       transform_values do |commands_just_for_app|
@@ -18,9 +18,11 @@ class CommandProcessor
     new(
       active_app_supplier,
       FocusedCommandProcessor.new(display, macro_runner, general_commands),
-      app_specific_commands.transform_values do |app_specific_commands|
-        FocusedCommandProcessor.new(display, macro_runner, app_specific_commands)
-      end
+      app_specific_commands.map do |app, app_specific_commands|
+        [app, FocusedCommandProcessor.new(display, macro_runner, app_specific_commands)]
+      rescue => e
+        raise "For #{app}: #{e.message}"
+      end.to_h
     )
   end
 

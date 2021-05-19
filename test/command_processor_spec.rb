@@ -105,6 +105,19 @@ describe 'command processor' do
       }
     end
 
+    it 'fails if more than one command has the same associated chord' do
+      expect do
+        command_processor_for_commands(
+          app_specific: {
+            "an_app" => {
+              "A Chord" => "Ctrl+a",
+              "Another Chord" => "Ctrl+b",
+            }
+          }
+        )
+      end.to raise_error("For an_app: The chord AC is associated with many commands: A Chord, Another Chord")
+    end
+
     context 'and the active app has commands' do
       let(:active_app) { 'an_app' }
 
