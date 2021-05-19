@@ -82,25 +82,57 @@ describe 'command processor' do
     let(:commands) do
       {
         general: {
-          "Delete Word" => "Control_L+Left Shift+Control_L+Right Delete"
+          "Only General" => "Ctrl+o+g",
+          "Both General Specific" => "Ctrl+g",
         },
         app_specific: {
-          "firefox" => {
-            "Switch Tab" => "Control_L+Tab"
+          "an_app" => {
+            "Only Specific" => "Ctrl+o+s",
+            "Both General Specific" => "Ctrl+s",
           }
         }
       }
     end
 
     context 'and the active app has commands' do
-      let(:active_app) { 'firefox' }
+      let(:active_app) { 'an_app' }
 
-      it 'asdf' do
+      it 'respond to that app specific commands' do
+        processor.process_chord("o")
         processor.process_chord("s")
-        processor.process_chord("t")
 
-        expect(displayed_text.last).to eq("Switch Tab")
-        expect(run_macros).to contain_exactly("Control_L+Tab")
+        expect(displayed_text.last).to eq("Only Specific")
+        expect(run_macros).to contain_exactly("Ctrl+o+s")
+      end
+
+      it 'still responds to other general commands' do
+        processor.process_chord("o")
+        processor.process_chord("g")
+
+        expect(displayed_text.last).to eq("Only General")
+        expect(run_macros).to contain_exactly("Ctrl+o+g")
+      end
+
+      it 'gives priority to specific commands' do
+        processor.process_chord("b")
+        processor.process_chord("g")
+        processor.process_chord("s")
+
+        expect(displayed_text.last).to eq("Both General Specific")
+        expect(run_macros).to contain_exactly("Ctrl+s")
+      end
+    end
+
+    context 'and the active app has no commands' do
+      let(:active_app) { 'another_app' }
+
+      it 'responds to general commands' do
+        processor.process_chord("b")
+        processor.process_chord("g")
+        processor.process_chord("s")
+
+        expect(displayed_text.last).to eq("Both General Specific")
+        expect(run_macros).to contain_exactly("Ctrl+g")
       end
     end
   end
