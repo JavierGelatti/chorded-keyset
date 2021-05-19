@@ -116,19 +116,6 @@ describe 'command processor' do
       }
     end
 
-    it 'fails if more than one command has the same associated chord, including the app name in the error' do
-      expect do
-        command_processor_for_commands(
-          app_specific: {
-            "an_app" => {
-              "A Chord" => "Ctrl+a",
-              "Another Chord" => "Ctrl+b",
-            }
-          }
-        )
-      end.to raise_error("For an_app: The chord AC is associated with many commands: A Chord, Another Chord")
-    end
-
     context 'and the active app has commands' do
       let(:active_app) { 'an_app' }
 
@@ -148,7 +135,7 @@ describe 'command processor' do
         expect(run_macros).to contain_exactly("Ctrl+o+g")
       end
 
-      it 'gives priority to specific commands' do
+      it 'gives priority to specific commands if the command name is exactly the same' do
         processor.process_chord("b")
         processor.process_chord("g")
         processor.process_chord("s")
@@ -156,6 +143,26 @@ describe 'command processor' do
         expect(displayed_text.last).to eq("Both General Specific")
         expect(run_macros).to contain_exactly("Ctrl+s")
       end
+
+      xit 'gives priority to specific commands if the app command chord matches a general command chord' do
+        processor = command_processor_for_commands(
+          general: {
+            "gEneral Chord" => "Ctrl+g"
+          },
+          app_specific: {
+            "an_app" => {
+              "spEcific Chord" => "Ctrl+s"
+            }
+          }
+        )
+
+        processor.process_chord("e")
+        processor.process_chord("c")
+
+        expect(displayed_text.last).to eq("spEcific Chord")
+        expect(run_macros).to contain_exactly("Ctrl+s")
+      end
+
     end
 
     context 'and the active app has no commands' do
@@ -169,6 +176,19 @@ describe 'command processor' do
         expect(displayed_text.last).to eq("Both General Specific")
         expect(run_macros).to contain_exactly("Ctrl+g")
       end
+    end
+
+    it 'fails if more than one command has the same associated chord, including the app name in the error' do
+      expect do
+        command_processor_for_commands(
+          app_specific: {
+            "an_app" => {
+              "A Chord" => "Ctrl+a",
+              "Another Chord" => "Ctrl+b",
+            }
+          }
+        )
+      end.to raise_error("For an_app: The chord AC is associated with many commands: A Chord, Another Chord")
     end
   end
 

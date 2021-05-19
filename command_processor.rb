@@ -1,23 +1,43 @@
 require 'trie'
 
 class CommandProcessor
-  def self.for(display, macro_runner, active_app_supplier, commands)
-    general_commands = commands.fetch("general", {})
-    app_specific_commands = commands.
-      fetch("app_specific", {}).
-      transform_values do |commands_just_for_app|
-        general_commands.merge(commands_just_for_app)
-      end
+  class << self
+    def for(display, macro_runner, active_app_supplier, commands)
+      general_commands = commands.fetch("general", {})
+      app_specific_commands = commands.
+        fetch("app_specific", {}).
+        transform_values do |commands_just_for_app|
+          general_commands.merge(commands_just_for_app)
+        end
 
-    new(
-      active_app_supplier,
-      FocusedCommandProcessor.new(display, macro_runner, general_commands),
-      app_specific_commands.map do |app, app_specific_commands|
-        [app, FocusedCommandProcessor.new(display, macro_runner, app_specific_commands)]
-      rescue => e
-        raise "For #{app}: #{e.message}"
-      end.to_h
-    )
+      new(
+        active_app_supplier,
+        FocusedCommandProcessor.new(display, macro_runner, chord_commands_from(general_commands)),
+        app_specific_commands.map do |app, app_specific_commands|
+          [app, FocusedCommandProcessor.new(display, macro_runner, chord_commands_from(app_specific_commands, app))]
+        end.to_h
+      )
+    end
+
+    private
+
+    def chord_commands_from(command_definitions, app_name = nil)
+      commands = command_definitions.map { |command_name, command_macro| KeysetCommand.new(command_name, command_macro) }
+
+      assert_no_duplicated_chords_in(commands, app_name)
+
+      commands.map { |command| [command.chords, command] }.to_h
+    end
+
+    def assert_no_duplicated_chords_in(commands, app_name)
+      commands.map(&:chords).uniq.each do |chords|
+        matching_commands = commands.select { |command| command.could_match_chords?(chords) }
+
+        if matching_commands.size > 1
+          raise "#{app_name && "For #{app_name}: "}The chord #{chords.upcase} is associated with many commands: #{commands.map(&:name).join(", ")}"
+        end
+      end
+    end
   end
 
   def initialize(active_app_supplier, general_command_processor, app_specific_command_processors)
@@ -33,16 +53,27 @@ class CommandProcessor
   end
 end
 
+class KeysetCommand < Struct.new(:name, :macro)
+  NIL = new("", "")
+
+  def chords
+    name.scan(/[[:upper:]]/).join.downcase
+  end
+
+  def could_match_chords?(an_input)
+    chords.start_with?(an_input)
+  end
+end
+
 class FocusedCommandProcessor
   MAX_SECONDS_DELAY = 5
 
-  def initialize(display, macro_runner, commands)
+  def initialize(display, macro_runner, chord_commands)
     @display = display
     @macro_runner = macro_runner
+    @chord_commands = chord_commands
     @chorded_sequence = ""
     @last_chord_timestamp = Time.now
-    @commands = commands
-    @chord_sequences = chords_of(commands)
   end
 
   def process_chord(chorded_character)
@@ -65,40 +96,10 @@ class FocusedCommandProcessor
 
   attr_reader :chord_sequences
 
-  def chords_of(commands)
-    chords = commands.keys.map do |command_name|
-      [command_name, command_name.scan(/[[:upper:]]/).join.downcase]
-    end.to_h
-
-    assert_no_duplicated_chords_in(chords)
-
-    chords
-  end
-
-  def assert_no_duplicated_chords_in(sequences)
-    sequences.values.
-      map { |sequence| [sequence, commands_for(chord: sequence, on: sequences)] }.
-      filter { |sequence, command_names| command_names.size > 1 }.
-      any? do |sequence, command_names|
-        raise "The chord #{sequence.upcase} is associated with many commands: #{command_names.join(", ")}"
-      end
-  end
-
-  def commands_for(chord:, on:)
-    command_names = on
-    command_names.select { |*, command_chord| command_chord.start_with?(chord) }.map { |name, *| name }
-  end
-
-  def command_names
-    @command_names ||= @commands.keys.map do |command_name|
-      [chord_sequences[command_name], command_name]
-    end.to_h
-  end
-
   def commands_trie
     @commands_trie ||= trie_with(
-      @commands.keys.map do |command_name|
-        [chord_sequences[command_name], @commands[command_name]]
+      @chord_commands.values.map do |command|
+        [command.chords, command.macro]
       end
     )
   end
@@ -128,7 +129,7 @@ class FocusedCommandProcessor
   end
 
   def completed_words
-    first_command_name = command_names.fetch(possible_commands.first, "")
+    first_command_name = @chord_commands.fetch(possible_commands.first, KeysetCommand::NIL).name
     completed_words = first_command_name.split(" ").take(@chorded_sequence.size).join(" ")
   end
 
