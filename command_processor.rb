@@ -1,5 +1,11 @@
 require 'trie'
 
+class Hash
+  def keys_for(a_value)
+    select { |*, value| a_value == value }.map { |key, *| key }
+  end
+end
+
 class CommandProcessor
   def self.for(display, macro_runner, active_app_supplier, commands)
     general_commands = commands[:general]
@@ -40,6 +46,7 @@ class FocusedCommandProcessor
     @chorded_sequence = ""
     @last_chord_timestamp = Time.now
     @commands = commands
+    @chord_sequences = chords_of(commands)
   end
 
   def process_chord(chorded_character)
@@ -60,10 +67,25 @@ class FocusedCommandProcessor
 
   private
 
-  def chord_sequences
-    @chord_sequences ||= @commands.keys.map do |command_name|
+  attr_reader :chord_sequences
+
+  def chords_of(commands)
+    chords = commands.keys.map do |command_name|
       [command_name, command_name.scan(/[[:upper:]]/).join.downcase]
     end.to_h
+
+    assert_no_duplicated_chords_in(chords)
+
+    chords
+  end
+
+  def assert_no_duplicated_chords_in(sequences)
+    sequences.values.
+      map { |sequence| [sequence, sequences.keys_for(sequence)] }.
+      filter { |sequence, command_names| command_names.size > 1 }.
+      any? do |sequence, command_names|
+        raise "The chord #{sequence.upcase} is associated with many commands: #{command_names.join(", ")}"
+      end
   end
 
   def command_names

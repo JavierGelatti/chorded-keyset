@@ -2,7 +2,7 @@ require_relative '../command_processor'
 
 describe 'command processor' do
   subject(:processor) do
-    CommandProcessor.for(display, macro_runner, -> { active_app }, commands)
+    command_processor_for_commands(commands)
   end
 
   let(:commands) do
@@ -78,6 +78,17 @@ describe 'command processor' do
     expect(run_macros).not_to be_empty
   end
 
+  it 'fails if more than one command has the same associated chord' do
+    expect do
+      command_processor_for_commands(
+        general: {
+          "Delete Word" => "d+w",
+          "Do Work" => "d+o+w"
+        }
+      )
+    end.to raise_error("The chord DW is associated with many commands: Delete Word, Do Work")
+  end
+
   context 'when there are app-specific commands' do
     let(:commands) do
       {
@@ -139,5 +150,9 @@ describe 'command processor' do
 
   def time_travel_to(a_time)
     allow(Time).to receive(:now).and_return(a_time)
+  end
+
+  def command_processor_for_commands(commands)
+    CommandProcessor.for(display, macro_runner, -> { active_app }, commands)
   end
 end
