@@ -11,7 +11,11 @@ commands = {
 
 display = ->(line) { STDOUT.write("#{line}\n") }
 macro_runner = ->(macro) { `xdotool key #{macro}` }
-command_processor = CommandProcessor.new(display, macro_runner, commands)
+active_app = -> {
+  /^WM_CLASS\(STRING\) = "(.*)", "(.*)"$/.
+    match(`xprop -id $(xdotool getwindowfocus) WM_CLASS`)[2]
+}
+command_processor = CommandProcessor.new(display, macro_runner, active_app, commands)
 
 STDOUT.sync = true
 

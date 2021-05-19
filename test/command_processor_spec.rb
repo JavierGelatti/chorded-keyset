@@ -2,12 +2,14 @@ require_relative '../command_processor'
 
 describe 'command processor' do
   subject(:processor) do
-    CommandProcessor.new(display, macro_runner, commands)
+    CommandProcessor.new(display, macro_runner, -> { active_app }, commands)
   end
 
   let(:commands) do
     {
-      "Delete Word" => "Control_L+Left Shift+Control_L+Right Delete"
+      general: {
+        "Delete Word" => "Control_L+Left Shift+Control_L+Right Delete"
+      }
     }
   end
 
@@ -16,6 +18,8 @@ describe 'command processor' do
 
   let(:macro_runner) { ->(macro) { run_macros << macro } }
   let(:run_macros) { [] }
+
+  let(:active_app) { 'random-app' }
 
   it 'gives feedback when processing a top-level command' do
     processor.process_chord("d")
@@ -72,6 +76,33 @@ describe 'command processor' do
     processor.process_chord("w")
 
     expect(run_macros).not_to be_empty
+  end
+
+  context 'when there are app-specific commands' do
+    let(:commands) do
+      {
+        general: {
+          "Delete Word" => "Control_L+Left Shift+Control_L+Right Delete"
+        },
+        app_specific: {
+          "firefox" => {
+            "Switch Tab" => "Control_L+Tab"
+          }
+        }
+      }
+    end
+
+    context 'and the active app has commands' do
+      let(:active_app) { 'firefox' }
+
+      it 'asdf' do
+        processor.process_chord("s")
+        processor.process_chord("t")
+
+        expect(displayed_text.last).to eq("Switch Tab")
+        expect(run_macros).to contain_exactly("Control_L+Tab")
+      end
+    end
   end
 
   def time_travel_to(a_time)
