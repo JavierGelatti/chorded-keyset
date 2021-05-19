@@ -15,7 +15,7 @@ active_app = -> {
   /^WM_CLASS\(STRING\) = "(.*)", "(.*)"$/.
     match(`xprop -id $(xdotool getwindowfocus) WM_CLASS`)[2]
 }
-command_processor = CommandProcessor.new(display, macro_runner, active_app, commands)
+command_processor = CommandProcessor.for(display, macro_runner, active_app, commands)
 
 STDOUT.sync = true
 

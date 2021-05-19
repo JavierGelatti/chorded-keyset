@@ -2,7 +2,7 @@ require_relative '../command_processor'
 
 describe 'command processor' do
   subject(:processor) do
-    CommandProcessor.new(display, macro_runner, -> { active_app }, commands)
+    CommandProcessor.for(display, macro_runner, -> { active_app }, commands)
   end
 
   let(:commands) do

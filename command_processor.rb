@@ -1,15 +1,45 @@
 require 'trie'
 
 class CommandProcessor
+  def self.for(display, macro_runner, active_app_supplier, commands)
+    general_commands = commands[:general]
+    app_specific_commands = commands.
+      fetch(:app_specific, {}).
+      transform_values do |commands_just_for_app|
+        general_commands.merge(commands_just_for_app)
+      end
+
+    new(
+      active_app_supplier,
+      FocusedCommandProcessor.new(display, macro_runner, general_commands),
+      app_specific_commands.transform_values do |app_specific_commands|
+        FocusedCommandProcessor.new(display, macro_runner, app_specific_commands)
+      end
+    )
+  end
+
+  def initialize(active_app_supplier, general_command_processor, app_specific_command_processors)
+    @general_command_processor = general_command_processor
+    @app_specific_command_processors = app_specific_command_processors
+    @active_app_supplier = active_app_supplier
+  end
+
+  def process_chord(chorded_character)
+    active_app = @active_app_supplier.call
+
+    (@app_specific_command_processors[active_app] || @general_command_processor).process_chord(chorded_character)
+  end
+end
+
+class FocusedCommandProcessor
   MAX_SECONDS_DELAY = 5
 
-  def initialize(display, macro_runner, active_app_supplier, commands)
+  def initialize(display, macro_runner, commands)
     @display = display
     @macro_runner = macro_runner
     @chorded_sequence = ""
     @last_chord_timestamp = Time.now
     @commands = commands
-    @active_app_supplier = active_app_supplier
   end
 
   def process_chord(chorded_character)
@@ -17,7 +47,6 @@ class CommandProcessor
     @last_chord_timestamp = Time.now
     @chorded_sequence += chorded_character
 
-    @current_active_app = @active_app_supplier.call
     clear_chorded_sequence and return unless possible_command?
 
     if completed_command?
@@ -32,62 +61,21 @@ class CommandProcessor
   private
 
   def chord_sequences
-    @chord_sequences ||= begin
-      Hash.
-        new(chord_sequences_of(general_commands)).
-        merge(app_specific_commands.
-          transform_values { |commands_for_app| chord_sequences_of(commands_for_app) }
-        )
-    end
-
-    @chord_sequences[@current_active_app]
-  end
-
-  def chord_sequences_of(commands)
-    commands.keys.map do |command_name|
+    @chord_sequences ||= @commands.keys.map do |command_name|
       [command_name, command_name.scan(/[[:upper:]]/).join.downcase]
     end.to_h
   end
 
   def command_names
-    commands.keys.map do |command_name|
+    @command_names ||= @commands.keys.map do |command_name|
       [chord_sequences[command_name], command_name]
     end.to_h
   end
 
-  def general_commands
-    @commands[:general]
-  end
-
-  def app_specific_commands
-    @commands.
-      fetch(:app_specific, {}).
-      transform_values do |commands_just_for_app|
-        general_commands.merge(commands_just_for_app)
-      end
-  end
-
-  def commands
-    app_specific_commands[@current_active_app] || general_commands
-  end
-
   def commands_trie
-    @commands_tries ||= begin
-      Hash.
-        new(command_trie_with(general_commands)).
-        merge(app_specific_commands.
-          transform_values { |commands_for_app| command_trie_with(commands_for_app) }
-        )
-    end
-
-    @commands_tries[@current_active_app]
-  end
-
-  def command_trie_with(commands)
-    chord_sequences = chord_sequences_of(commands)
-    trie_with(
-      commands.keys.map do |command_name|
-        [chord_sequences[command_name], commands[command_name]]
+    @commands_trie ||= trie_with(
+      @commands.keys.map do |command_name|
+        [chord_sequences[command_name], @commands[command_name]]
       end
     )
   end
