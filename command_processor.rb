@@ -3,18 +3,20 @@ require 'trie'
 class CommandProcessor
   class << self
     def for(display, macro_runner, active_app_supplier, commands)
-      general_commands = commands.fetch("general", {})
+      general_commands = chord_commands_from(commands.fetch("general", {}))
       app_specific_commands = commands.
         fetch("app_specific", {}).
-        transform_values do |commands_just_for_app|
-          general_commands.merge(commands_just_for_app)
-        end
+        map do |app_name, definition_of_commands_just_for_app|
+          commands_just_for_app = chord_commands_from(definition_of_commands_just_for_app, app_name)
+
+          [app_name, general_commands.merge(commands_just_for_app)]
+        end.to_h
 
       new(
         active_app_supplier,
-        FocusedCommandProcessor.new(display, macro_runner, chord_commands_from(general_commands)),
+        FocusedCommandProcessor.new(display, macro_runner, general_commands),
         app_specific_commands.map do |app, app_specific_commands|
-          [app, FocusedCommandProcessor.new(display, macro_runner, chord_commands_from(app_specific_commands, app))]
+          [app, FocusedCommandProcessor.new(display, macro_runner, app_specific_commands)]
         end.to_h
       )
     end

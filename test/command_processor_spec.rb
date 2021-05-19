@@ -144,7 +144,7 @@ describe 'command processor' do
         expect(run_macros).to contain_exactly("Ctrl+s")
       end
 
-      xit 'gives priority to specific commands if the app command chord matches a general command chord' do
+      it 'gives priority to specific commands if the app command chord matches a general command chord' do
         processor = command_processor_for_commands(
           general: {
             "gEneral Chord" => "Ctrl+g"
