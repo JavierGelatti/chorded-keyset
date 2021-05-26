@@ -124,7 +124,14 @@ Keymap* numberKeymap() {
   numberKeymap[0b11000] = '9';
   numberKeymap[0b11110] = '0'; // h
 
+  // Special characters
+  numberKeymap[0b11111] = ' ';
+  numberKeymap[0b01110] = KEY_BACKSPACE;
+  numberKeymap[0b11001] = KEY_RETURN;
   numberKeymap[0b11101] = KEY_ESC; // c
+
+  numberKeymap[0b00111] = '\0'; // Shift
+  numberKeymap[0b11100] = '\0'; // Switch
 
   return new Keymap(numberKeymap);
 }
