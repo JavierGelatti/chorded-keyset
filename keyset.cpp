@@ -225,12 +225,19 @@ void Keyset::loopWithDelayForPress() {
   }
 }
 
-Keyset::Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3], const std::function<void(char)> keyboardWrite)
-  // We initialize the arrays like this to avoid an "array as initializer" error
-  : keyPins{keyPins[0], keyPins[1], keyPins[2], keyPins[3], keyPins[4]},
-    modeLeds{modeLeds[0], modeLeds[1], modeLeds[2]},
-    shiftLed(10),
-    keyboardWrite(keyboardWrite) {
+Keyset::Keyset(
+  const int (&keyPins)[numKeys],
+  const int (&modeLeds)[numModeLeds],
+  const int shiftLed,
+  const int (&switchPins)[numSwitch],
+  const std::function<void(char)> keyboardWrite
+) : // We initialize the arrays like this to avoid an "array as initializer" error
+  keyPins{keyPins[0], keyPins[1], keyPins[2], keyPins[3], keyPins[4]},
+  modeLeds{modeLeds[0], modeLeds[1], modeLeds[2]},
+  switchPins{switchPins[0], switchPins[1]},
+  shiftLed(shiftLed),
+  keyboardWrite(keyboardWrite)
+{
   this->pressedKeys = 0;
   this->lastPressedKeyTimestamp = LONG_MAX;
   this->lastReleasedKeyTimestamp = 0;

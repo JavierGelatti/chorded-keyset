@@ -3,12 +3,14 @@
 #include <initializer_list>
 
 const int keyPins[5] = {3, 2, 4, 6, 5};
-const int modeLeds[3] = {7, 8, 9};
+const int modeLeds[3] = {15, 14, 16};
+const int shiftLed = 10;
+const int switchPins[2] = {9, 8};
 
 class KeysetSimulator {
   public:
   KeysetSimulator() {
-    this->keyset = new Keyset(keyPins, modeLeds, [&](char pressedChar) {
+    this->keyset = new Keyset(keyPins, modeLeds, shiftLed, switchPins, [&](char pressedChar) {
       writtenText += pressedChar;
     });
 

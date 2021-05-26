@@ -55,13 +55,21 @@ namespace std {
 #define KEY_F24         0xFB
 
 #define numKeys 5
+#define numModeLeds 3
+#define numSwitch 2
 #define maxNumberOfModes 8
 
 class Keymap;
 
 class Keyset {
   public:
-  Keyset(const int (&keyPins)[numKeys], const int (&modeLeds)[3], const std::function<void(char)> keyboardWrite);
+  Keyset(
+    const int (&keyPins)[numKeys],
+    const int (&modeLeds)[numModeLeds],
+    const int shiftLed,
+    const int (&switchPins)[numSwitch],
+    const std::function<void(char)> keyboardWrite
+  );
   ~Keyset();
 
   int getNumberOfModes();
@@ -95,8 +103,9 @@ class Keyset {
   bool numberMode;
 
   int mode;
-  const int modeLeds[3];
+  const int modeLeds[numModeLeds];
   const int shiftLed;
+  const int switchPins[numSwitch];
 
   int numberOfModes;
   Keymap* keymaps[maxNumberOfModes];
