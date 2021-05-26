@@ -25,6 +25,7 @@ class KeysetSimulator {
 
   void start() {
     keyset->keysetSetup();
+    keyset->keysetLoop();
   }
 
   void press(int keyNumber) {
@@ -54,6 +55,18 @@ class KeysetSimulator {
 
   int getNumberOfModes() {
     return keyset->getNumberOfModes();
+  }
+
+  bool shiftTurnedOn() {
+    return boardState->digitalPin[shiftLed] == HIGH;
+  }
+
+  int currentMode() {
+    int mode = 0;
+    for (int i = 0; i < 3; i++) {
+      mode += boardState->digitalPin[modeLeds[i]] << i;
+    }
+    return mode;
   }
 
   private:

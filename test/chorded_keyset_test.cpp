@@ -8,6 +8,8 @@ unittest(setup_initializes_the_modes) {
 
   assertEqual(2, keyset.getNumberOfModes());
   assertEqual("", keyset.getWrittenText());
+  assertEqual(false, keyset.shiftTurnedOn());
+  assertEqual(1, keyset.currentMode());
 }
 
 unittest(can_type_by_single_press) {
@@ -52,6 +54,44 @@ unittest(shift_mode_can_be_used_to_write_in_uppercase) {
   keyset.chord({ 5 });
 
   assertEqual("U", keyset.getWrittenText());
+}
+
+unittest(shift_led_turns_on_when_in_shift_mode) {
+  KeysetSimulator keyset;
+  keyset.start();
+
+  keyset.chord({ 1, 2, 3 });
+
+  assertEqual(true, keyset.shiftTurnedOn());
+}
+
+unittest(shift_led_turns_off_when_exit_shift_mode) {
+  KeysetSimulator keyset;
+  keyset.start();
+  keyset.chord({ 1, 2, 3 });
+
+  keyset.chord({ 1, 2, 3 });
+
+  assertEqual(false, keyset.shiftTurnedOn());
+}
+
+unittest(can_change_mode) {
+  KeysetSimulator keyset;
+  keyset.start();
+
+  keyset.chord({ 3, 4, 5 });
+
+  assertEqual(2, keyset.currentMode());
+}
+
+unittest(writes_numbers_in_numeric_mode) {
+  KeysetSimulator keyset;
+  keyset.start();
+  keyset.chord({ 3, 4, 5 });
+
+  keyset.chord({ 1 });
+
+  assertEqual("1", keyset.getWrittenText());
 }
 
 unittest_main()

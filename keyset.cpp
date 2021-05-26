@@ -144,7 +144,7 @@ void Keyset::keysetSetup() {
   forKeyPins(keyPin) {
     pinMode(keyPin, INPUT_PULLUP);
   }
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < numModeLeds; i++) {
     pinMode(this->modeLeds[i], OUTPUT);
   }
   pinMode(this->shiftLed, OUTPUT);
@@ -153,7 +153,7 @@ void Keyset::keysetSetup() {
 void Keyset::keysetLoop() {
   loopWithDelayForPress();
 
-  for (int i = 0; i < 3; i++) {
+  for (int i = 0; i < numModeLeds; i++) {
     digitalWrite(this->modeLeds[i], testBit(this->mode+1, i));
   }
   digitalWrite(this->shiftLed, this->shiftActivated);
