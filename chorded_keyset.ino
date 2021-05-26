@@ -1,10 +1,12 @@
 #include <Keyboard.h>
 #include "keyset.h"
 
-const int keyPins[5] = {5,6,4,2,3}; //{2, 3, 4, 5, 6};
-const int modeLeds[] = {7, 8, 9};
+const int keyPins[5] = {5, 6, 4, 2, 3};
+const int modeLeds[3] = {15, 14, 16};
+const int shiftLed = 10;
+const int switchPins[2] = {9, 8};
 
-Keyset keyset(keyPins, modeLeds, [](char pressedChar) {
+Keyset keyset(keyPins, modeLeds, shiftLed, switchPins, [](char pressedChar) {
   Serial.print(pressedChar);
   //Keyboard.write(pressedChar);
 });
