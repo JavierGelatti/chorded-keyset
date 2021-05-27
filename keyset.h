@@ -69,7 +69,7 @@ class Keyset {
     const int shiftLed,
     const int (&switchPins)[numSwitch],
     const std::function<void(char)> keyboardWrite,
-    const std::function<void(const char*)> eventLog
+    const std::function<void(const char*)> logEvent
   );
   ~Keyset();
 
@@ -89,6 +89,7 @@ class Keyset {
   void processChord();
   char chordedCharacter();
   bool isInLeftHandMode();
+  bool isInLogMode();
 
   private:
   const int keyPins[numKeys];
@@ -99,13 +100,13 @@ class Keyset {
   bool shiftActivated;
   bool numberMode;
 
-  int mode;
+  int currentMode;
   const int modeLeds[numModeLeds];
   const int shiftLed;
   const int switchPins[numSwitch];
 
-  int numberOfModes;
+  int numberOfKeymaps;
   Keymap* keymaps[maxNumberOfModes];
   const std::function<void(char)> keyboardWrite;
-  const std::function<void(const char*)> eventLog;
+  const std::function<void(const char*)> logEvent;
 };

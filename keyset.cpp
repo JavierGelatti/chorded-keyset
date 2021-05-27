@@ -142,7 +142,7 @@ const int switchMode = 0b11100;
 #define forKeyPins(key) for (int key##Index = 0, key; key##Index < numKeys && (key = this->keyPins[key##Index], 1); key##Index ++)
 
 int Keyset::getNumberOfModes() {
-    return numberOfModes;
+    return numberOfKeymaps;
 }
 
 void Keyset::keysetSetup() {
@@ -164,13 +164,13 @@ void Keyset::keysetLoop() {
   loopWithDelayForPress();
 
   for (int i = 0; i < numModeLeds; i++) {
-    digitalWrite(modeLeds[i], testBit(mode+1, i));
+    digitalWrite(modeLeds[i], testBit(currentMode+1, i));
   }
   digitalWrite(shiftLed, shiftActivated);
 }
 
 void Keyset::registerKeymap(Keymap* keymapToRegister) {
-  keymaps[numberOfModes++] = keymapToRegister;
+  keymaps[numberOfKeymaps++] = keymapToRegister;
 }
 
 void Keyset::initializeKeymap() {
@@ -213,15 +213,19 @@ bool Keyset::isInLeftHandMode() {
 }
 
 char Keyset::chordedCharacter() {
-  int keymapIndex = mode == numberOfModes ? 0 : mode;
+  int keymapIndex = isInLogMode() ? 0 : currentMode;
   char pressedChar = keymaps[keymapIndex]->pressedCharFor(pressedKeys);
   return shiftActivated ? toupper(pressedChar) : pressedChar;
 }
 
+bool Keyset::isInLogMode() {
+  return currentMode == numberOfKeymaps;
+}
+
 void Keyset::processChord() {
   char chordedChar = chordedCharacter();
-  if (mode == numberOfModes) {
-    if (chordedChar != '\0') eventLog(String(chordedChar).c_str());
+  if (isInLogMode()) {
+    if (chordedChar != '\0') logEvent(String(chordedChar).c_str());
   } else {
     if (chordedChar != '\0') keyboardWrite(chordedChar);
   }
@@ -229,8 +233,9 @@ void Keyset::processChord() {
   if (pressedKeys == shift) {
     shiftActivated = !shiftActivated;
   } else if (pressedKeys == switchMode) {
-    mode += 1;
-    mode %= numberOfModes + 1; // +1 for log mode
+    currentMode += 1;
+    currentMode %= numberOfKeymaps
+      + 1 /* consider log currentMode*/;
   }
   clearPressedKeys();
 }
@@ -259,26 +264,26 @@ Keyset::Keyset(
   const int shiftLed,
   const int (&switchPins)[numSwitch],
   const std::function<void(char)> keyboardWrite,
-  const std::function<void(const char*)> eventLog
+  const std::function<void(const char*)> logEvent
 ) : // We initialize the arrays like this to avoid an "array as initializer" error
   keyPins{keyPins[0], keyPins[1], keyPins[2], keyPins[3], keyPins[4]},
   modeLeds{modeLeds[0], modeLeds[1], modeLeds[2]},
   switchPins{switchPins[0], switchPins[1]},
   shiftLed(shiftLed),
   keyboardWrite(keyboardWrite),
-  eventLog(eventLog)
+  logEvent(logEvent)
 {
   this->pressedKeys = 0;
   this->lastPressedKeyTimestamp = LONG_MAX;
   this->lastReleasedKeyTimestamp = 0;
   this->shiftActivated = false;
   this->numberMode = false;
-  this->mode = 0;
-  this->numberOfModes = 0;
+  this->currentMode = 0;
+  this->numberOfKeymaps = 0;
 }
 
 Keyset::~Keyset() {
-  forindex(i, numberOfModes) {
+  forindex(i, numberOfKeymaps) {
     delete keymaps[i];
   }
 }
