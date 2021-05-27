@@ -24,14 +24,14 @@ describe 'command processor' do
   it 'gives feedback when processing a top-level command' do
     processor.process_chord("d")
 
-    expect(displayed_text).to contain_exactly("Delete _")
+    expect(displayed_text).to contain_exactly("d  : Delete _")
   end
 
   it 'gives feedback and performs an action when processing a leaf command' do
     processor.process_chord("d")
     processor.process_chord("w")
 
-    expect(displayed_text).to contain_exactly("Delete _", "Delete Word")
+    expect(displayed_text).to contain_exactly("d  : Delete _", "dw : Delete Word")
     expect(run_macros).to contain_exactly("Control_L+Left Shift+Control_L+Right Delete")
   end
 
@@ -40,7 +40,7 @@ describe 'command processor' do
     processor.process_chord("unknown")
     processor.process_chord("d")
 
-    expect(displayed_text).to contain_exactly("Delete _", "", "Delete _")
+    expect(displayed_text).to contain_exactly("d  : Delete _", "dunknown: ", "d  : Delete _")
     expect(run_macros).to be_empty
   end
 
@@ -123,7 +123,7 @@ describe 'command processor' do
         processor.process_chord("o")
         processor.process_chord("s")
 
-        expect(displayed_text.last).to eq("Only Specific")
+        expect(displayed_text.last).to eq("os : Only Specific")
         expect(run_macros).to contain_exactly("Ctrl+o+s")
       end
 
@@ -131,7 +131,7 @@ describe 'command processor' do
         processor.process_chord("o")
         processor.process_chord("g")
 
-        expect(displayed_text.last).to eq("Only General")
+        expect(displayed_text.last).to eq("og : Only General")
         expect(run_macros).to contain_exactly("Ctrl+o+g")
       end
 
@@ -140,7 +140,7 @@ describe 'command processor' do
         processor.process_chord("g")
         processor.process_chord("s")
 
-        expect(displayed_text.last).to eq("Both General Specific")
+        expect(displayed_text.last).to eq("bgs: Both General Specific")
         expect(run_macros).to contain_exactly("Ctrl+s")
       end
 
@@ -159,7 +159,7 @@ describe 'command processor' do
         processor.process_chord("e")
         processor.process_chord("c")
 
-        expect(displayed_text.last).to eq("spEcific Chord")
+        expect(displayed_text.last).to eq("ec : spEcific Chord")
         expect(run_macros).to contain_exactly("Ctrl+s")
       end
 
@@ -173,7 +173,7 @@ describe 'command processor' do
         processor.process_chord("g")
         processor.process_chord("s")
 
-        expect(displayed_text.last).to eq("Both General Specific")
+        expect(displayed_text.last).to eq("bgs: Both General Specific")
         expect(run_macros).to contain_exactly("Ctrl+g")
       end
     end

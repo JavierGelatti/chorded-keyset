@@ -90,7 +90,7 @@ class FocusedCommandProcessor
       clear_chorded_sequence
     else
       # Accumulate chord
-      @display.call("#{completed_words} _")
+      show_feedback("#{completed_words} _")
     end
   end
 
@@ -136,7 +136,11 @@ class FocusedCommandProcessor
   end
 
   def clear_chorded_sequence
-    @display.call(completed_words)
+    show_feedback(completed_words)
     @chorded_sequence = ""
+  end
+
+  def show_feedback(text)
+    @display.call("#{@chorded_sequence.ljust(3)}: #{text}")
   end
 end
