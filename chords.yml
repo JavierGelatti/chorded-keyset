@@ -3,6 +3,8 @@ general:
   Undo: Control_L+z
   Redo: Control_L+Shift+z
   Switch windowS: Alt_L+Tab
+  Copy: Control_L+c
+  Paste: Control_L+v
 
 app_specific:
   firefox:
