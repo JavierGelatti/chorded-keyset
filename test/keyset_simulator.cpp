@@ -15,8 +15,12 @@ class KeysetSimulator {
     });
 
     this->boardState = GODMODE();
-    for (int i = 0; i < 5; i++) {
+    for (int i = 0; i < numKeys; i++) {
       this->boardState->digitalPin[keyPins[i]] = HIGH;
+    }
+
+    for (int i = 0; i < numSwitch; i++) {
+      this->boardState->digitalPin[switchPins[i]] = HIGH;
     }
   }
   ~KeysetSimulator() {
@@ -67,6 +71,14 @@ class KeysetSimulator {
       mode += boardState->digitalPin[modeLeds[i]] << i;
     }
     return mode;
+  }
+
+  void turnOnRightHandMode() {
+    boardState->digitalPin[switchPins[0]] = LOW;
+  }
+
+  bool inLeftHandMode() {
+    return boardState->digitalPin[switchPins[0]] == HIGH;
   }
 
   private:

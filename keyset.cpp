@@ -13,14 +13,14 @@ class Keymap {
   public:
   Keymap(char (&keymap)[32]) {
     bool noModifiers[32] = { false };
-    this->initialize(keymap, noModifiers);
+    initialize(keymap, noModifiers);
   }
   Keymap(char (&keymap)[32], bool (&modifierFlags)[32]) {
-    this->initialize(keymap, modifierFlags);
+    initialize(keymap, modifierFlags);
   }
   ~Keymap() {
     forindex(i, 32) {
-      delete this->keymap[i];
+      delete keymap[i];
     }
   }
 
@@ -142,7 +142,7 @@ const int switchMode = 0b11100;
 #define forKeyPins(key) for (int key##Index = 0, key; key##Index < numKeys && (key = this->keyPins[key##Index], 1); key##Index ++)
 
 int Keyset::getNumberOfModes() {
-    return this->numberOfModes;
+    return numberOfModes;
 }
 
 void Keyset::keysetSetup() {
@@ -152,22 +152,25 @@ void Keyset::keysetSetup() {
     pinMode(keyPin, INPUT_PULLUP);
   }
   for (int i = 0; i < numModeLeds; i++) {
-    pinMode(this->modeLeds[i], OUTPUT);
+    pinMode(modeLeds[i], OUTPUT);
   }
-  pinMode(this->shiftLed, OUTPUT);
+  pinMode(shiftLed, OUTPUT);
+  for (int i = 0; i < numSwitch; i++) {
+    pinMode(switchPins[i], INPUT_PULLUP);
+  }
 }
 
 void Keyset::keysetLoop() {
   loopWithDelayForPress();
 
   for (int i = 0; i < numModeLeds; i++) {
-    digitalWrite(this->modeLeds[i], testBit(this->mode+1, i));
+    digitalWrite(modeLeds[i], testBit(mode+1, i));
   }
-  digitalWrite(this->shiftLed, this->shiftActivated);
+  digitalWrite(shiftLed, shiftActivated);
 }
 
 void Keyset::registerKeymap(Keymap* keymapToRegister) {
-  this->keymaps[this->numberOfModes++] = keymapToRegister;
+  keymaps[numberOfModes++] = keymapToRegister;
 }
 
 void Keyset::initializeKeymap() {
@@ -176,12 +179,12 @@ void Keyset::initializeKeymap() {
 }
 
 void Keyset::clearPressedKeys() {
-  this->pressedKeys = 0;
-  this->lastPressedKeyTimestamp = LONG_MAX;
+  pressedKeys = 0;
+  lastPressedKeyTimestamp = LONG_MAX;
 }
 
 void Keyset::clearPressedKey(int keyIndex) {
-  clearBit(this->pressedKeys, keyIndex);
+  clearBit(pressedKeys, keyIndex);
 }
 
 bool Keyset::isBeingPressed(int keyPin) {
@@ -198,37 +201,49 @@ bool Keyset::isBeingPressed(int keyPin) {
 }
 
 bool Keyset::wasPressed(int keyIndex) {
-  return testBit(this->pressedKeys, keyIndex);
+  return testBit(pressedKeys, keyIndex);
 }
 
 long Keyset::ellapsedTimeFrom(long milliseconds) {
   return millis() - milliseconds;
 }
 
+bool Keyset::isInLeftHandMode() {
+  return digitalRead(switchPins[0]) == HIGH;
+}
+
+char Keyset::chordedCharacter() {
+  char pressedChar = keymaps[mode]->pressedCharFor(pressedKeys);
+  return shiftActivated ? toupper(pressedChar) : pressedChar;
+}
+
+void Keyset::processChord() {
+  char chordedChar = chordedCharacter();
+  if (chordedChar != '\0') keyboardWrite(chordedChar);
+
+  if (pressedKeys == shift) {
+    shiftActivated = !shiftActivated;
+  } else if (pressedKeys == switchMode) {
+    mode = (mode + 1) % numberOfModes;
+  }
+  clearPressedKeys();
+}
+
 void Keyset::loopWithDelayForPress() {
   bool nothingPressed = true;
   forKeyPins(keyPin) {
     if (isBeingPressed(keyPin)) {
-      setBit(this->pressedKeys, keyPinIndex); // Esto cambia entre izq y der (numKeys-1-keyPinIndex)
-      this->lastPressedKeyTimestamp = millis();
+      setBit(
+        pressedKeys,
+        isInLeftHandMode() ? keyPinIndex : numKeys - 1 - keyPinIndex
+      );
+      lastPressedKeyTimestamp = millis();
       nothingPressed = false;
-    } else {
     }
   }
 
-  if (nothingPressed && this->pressedKeys != 0) {
-    char pressedChar;
-    pressedChar = this->keymaps[this->mode]->pressedCharFor(this->pressedKeys);
-    if (this->shiftActivated) pressedChar = toupper(pressedChar);
-
-    if (pressedChar != '\0') keyboardWrite(pressedChar);
-
-    if (this->pressedKeys == shift) {
-      this->shiftActivated = !this->shiftActivated;
-    } else if (this->pressedKeys == switchMode) {
-      this->mode = (this->mode + 1) % this->numberOfModes;
-    }
-    clearPressedKeys();
+  if (nothingPressed && pressedKeys != 0) {
+    processChord();
   }
 }
 

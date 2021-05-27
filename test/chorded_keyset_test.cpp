@@ -10,6 +10,7 @@ unittest(setup_initializes_the_modes) {
   assertEqual("", keyset.getWrittenText());
   assertEqual(false, keyset.shiftTurnedOn());
   assertEqual(1, keyset.currentMode());
+  assertEqual(true, keyset.inLeftHandMode());
 }
 
 unittest(can_type_by_single_press) {
@@ -92,6 +93,17 @@ unittest(writes_numbers_in_numeric_mode) {
   keyset.chord({ 1 });
 
   assertEqual("1", keyset.getWrittenText());
+}
+
+unittest(can_switch_to_right_hand_mode) {
+  KeysetSimulator keyset;
+  keyset.start();
+
+  keyset.turnOnRightHandMode();
+
+  keyset.chord({ 1 });
+
+  assertEqual("u", keyset.getWrittenText());
 }
 
 unittest_main()

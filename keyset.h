@@ -78,20 +78,16 @@ class Keyset {
 
   private:
   void registerKeymap(Keymap* keymapToRegister);
-
   void initializeKeymap();
-
   void clearPressedKeys();
-
   void clearPressedKey(int keyIndex);
-
   bool isBeingPressed(int keyPin);
-
   bool wasPressed(int keyIndex);
-
   long ellapsedTimeFrom(long milliseconds);
-
   void loopWithDelayForPress();
+  void processChord();
+  char chordedCharacter();
+  bool isInLeftHandMode();
 
   private:
   const int keyPins[numKeys];
