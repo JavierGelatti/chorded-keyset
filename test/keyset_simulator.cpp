@@ -10,9 +10,16 @@ const int switchPins[2] = {9, 8};
 class KeysetSimulator {
   public:
   KeysetSimulator() {
-    this->keyset = new Keyset(keyPins, modeLeds, shiftLed, switchPins, [&](char pressedChar) {
-      writtenText += pressedChar;
-    });
+    this->keyset = new Keyset(
+      keyPins, modeLeds, shiftLed, switchPins,
+      [&](char pressedChar) {
+        writtenText += pressedChar;
+      },
+      [&](const char* event) {
+        if (eventLog.length() != 0) eventLog += "|";
+        eventLog += String(event);
+      }
+    );
 
     this->boardState = GODMODE();
     for (int i = 0; i < numKeys; i++) {
@@ -81,8 +88,13 @@ class KeysetSimulator {
     return boardState->digitalPin[switchPins[0]] == HIGH;
   }
 
+  String getLog() {
+    return eventLog;
+  }
+
   private:
   GodmodeState* boardState;
   Keyset* keyset;
   String writtenText = "";
+  String eventLog = "";
 };

@@ -213,18 +213,24 @@ bool Keyset::isInLeftHandMode() {
 }
 
 char Keyset::chordedCharacter() {
-  char pressedChar = keymaps[mode]->pressedCharFor(pressedKeys);
+  int keymapIndex = mode == numberOfModes ? 0 : mode;
+  char pressedChar = keymaps[keymapIndex]->pressedCharFor(pressedKeys);
   return shiftActivated ? toupper(pressedChar) : pressedChar;
 }
 
 void Keyset::processChord() {
   char chordedChar = chordedCharacter();
-  if (chordedChar != '\0') keyboardWrite(chordedChar);
+  if (mode == numberOfModes) {
+    if (chordedChar != '\0') eventLog(String(chordedChar).c_str());
+  } else {
+    if (chordedChar != '\0') keyboardWrite(chordedChar);
+  }
 
   if (pressedKeys == shift) {
     shiftActivated = !shiftActivated;
   } else if (pressedKeys == switchMode) {
-    mode = (mode + 1) % numberOfModes;
+    mode += 1;
+    mode %= numberOfModes + 1; // +1 for log mode
   }
   clearPressedKeys();
 }
@@ -252,13 +258,15 @@ Keyset::Keyset(
   const int (&modeLeds)[numModeLeds],
   const int shiftLed,
   const int (&switchPins)[numSwitch],
-  const std::function<void(char)> keyboardWrite
+  const std::function<void(char)> keyboardWrite,
+  const std::function<void(const char*)> eventLog
 ) : // We initialize the arrays like this to avoid an "array as initializer" error
   keyPins{keyPins[0], keyPins[1], keyPins[2], keyPins[3], keyPins[4]},
   modeLeds{modeLeds[0], modeLeds[1], modeLeds[2]},
   switchPins{switchPins[0], switchPins[1]},
   shiftLed(shiftLed),
-  keyboardWrite(keyboardWrite)
+  keyboardWrite(keyboardWrite),
+  eventLog(eventLog)
 {
   this->pressedKeys = 0;
   this->lastPressedKeyTimestamp = LONG_MAX;

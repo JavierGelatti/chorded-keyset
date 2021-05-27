@@ -68,7 +68,8 @@ class Keyset {
     const int (&modeLeds)[numModeLeds],
     const int shiftLed,
     const int (&switchPins)[numSwitch],
-    const std::function<void(char)> keyboardWrite
+    const std::function<void(char)> keyboardWrite,
+    const std::function<void(const char*)> eventLog
   );
   ~Keyset();
 
@@ -106,4 +107,5 @@ class Keyset {
   int numberOfModes;
   Keymap* keymaps[maxNumberOfModes];
   const std::function<void(char)> keyboardWrite;
+  const std::function<void(const char*)> eventLog;
 };

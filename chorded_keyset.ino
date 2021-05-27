@@ -6,16 +6,21 @@ const int modeLeds[3] = {15, 14, 16};
 const int shiftLed = 10;
 const int switchPins[2] = {9, 8};
 
-Keyset keyset(keyPins, modeLeds, shiftLed, switchPins, [](char pressedChar) {
-  Serial.print(pressedChar);
-  //Keyboard.write(pressedChar);
-});
+Keyset keyset(
+  keyPins, modeLeds, shiftLed, switchPins,
+  [](char pressedChar) {
+    Keyboard.write(pressedChar);
+  },
+  [](const char* event) {
+    Serial.print(event);
+  }
+);
 
 void setup() {
   keyset.keysetSetup();
 
   Serial.begin(9600);
-  //Keyboard.begin();
+  Keyboard.begin();
 }
 
 void loop() {

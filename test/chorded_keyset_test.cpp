@@ -106,4 +106,17 @@ unittest(can_switch_to_right_hand_mode) {
   assertEqual("u", keyset.getWrittenText());
 }
 
+unittest(can_switch_to_log_mode) {
+  KeysetSimulator keyset;
+  keyset.start();
+  keyset.chord({ 3, 4, 5 });
+  keyset.chord({ 3, 4, 5 });
+
+  keyset.chord({ 1 });
+
+  assertEqual(3, keyset.currentMode());
+  assertEqual("a", keyset.getLog());
+  assertEqual("", keyset.getWrittenText());
+}
+
 unittest_main()
