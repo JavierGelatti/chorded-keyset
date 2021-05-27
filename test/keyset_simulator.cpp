@@ -1,5 +1,6 @@
 #include "../keyset.h"
 #include <Godmode.h>
+#include <cassert>
 #include <initializer_list>
 
 const int keyPins[5] = {3, 2, 4, 6, 5};
@@ -73,10 +74,15 @@ class KeysetSimulator {
   }
 
   int currentMode() {
-    int mode = 0;
+    int mode = -1;
     for (int i = 0; i < 3; i++) {
-      mode += boardState->digitalPin[modeLeds[i]] << i;
+      if (boardState->digitalPin[modeLeds[i]] == HIGH) {
+        assert(("More than one mode led is turned on", mode == -1));
+        mode = i + 1;
+      }
     }
+
+    assert(("No mode led is turned on", mode != -1));
     return mode;
   }
 

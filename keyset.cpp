@@ -164,7 +164,7 @@ void Keyset::keysetLoop() {
   loopWithDelayForPress();
 
   for (int i = 0; i < numModeLeds; i++) {
-    digitalWrite(modeLeds[i], testBit(currentMode+1, i));
+    digitalWrite(modeLeds[i], currentMode == i ? HIGH : LOW);
   }
   digitalWrite(shiftLed, shiftActivated);
 }
@@ -193,10 +193,6 @@ bool Keyset::isBeingPressed(int keyPin) {
   for (int i = 0; i < tries; i++) {
     yes += (digitalRead(keyPin) == 0) ? 1 : -1;
   }
-  //if (yes != tries && yes != -tries) {
-  //  Serial.print("HEHE: ");
-  //  Serial.println(yes);
-  //}
   return yes > 0;
 }
 
