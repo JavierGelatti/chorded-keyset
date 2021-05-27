@@ -8,4 +8,4 @@ stty -F /dev/ttyACM0 cs8 9600 ignbrk \
 
 cat /dev/ttyACM0 \
     | ruby hud.rb \
-    | osd_cat --align left --pos bottom --lines 1 --outline 1 --color white --font -bitstream-*-medium-r-*
+    | osd_cat --align left --pos bottom --lines 1 --outline 1 --color white --font -bitstream-*-medium-r-*-*-*-120-*-*-m-*-*-0 # see xfontsel
