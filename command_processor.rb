@@ -83,6 +83,26 @@ class FocusedCommandProcessor
     @last_chord_timestamp = Time.now
     @chorded_sequence += chorded_character
 
+    if chorded_character.unpack("B*").first == "10110000" # == "\xB0"
+      @macro_runner.call("KP_Enter")
+      clear_chorded_sequence
+      return
+    elsif chorded_character.unpack("B*").first == "10110010" # == "\xB2"
+      @macro_runner.call("BackSpace")
+    else
+      #show_feedback(chorded_character.unpack("B*").inspect)
+      #return
+    end
+
+    if `xinput --query-state 14 | grep -oP "button\\[1\\]=\\K\\w+"`.strip == "down"
+      let = 'uoiea'
+      n = let.index(chorded_character) + 1
+      @macro_runner.call("Super+#{n}")
+      show_feedback("Switch #{n}")
+      @chorded_sequence = ""
+      return
+    end
+
     clear_chorded_sequence and return unless possible_command?
 
     if completed_command?

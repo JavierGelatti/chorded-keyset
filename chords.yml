@@ -5,7 +5,28 @@ general:
   Switch windowS: Alt_L+Tab
   Copy: Control_L+c
   Paste: Control_L+v
+  Save Work: Control_L+s
+  Exit Terminal: Control_L+c Control_L+d
 
 app_specific:
+  Emacs:
+    Evaluate: comma e e
+    Load: Escape g g V G comma e e Escape Control+o Control+o Escape
+    next (A): semicolon
+    Nomore: period
   firefox:
     Switch Tab: Control_L+Tab
+    Format Word Bold: Control_L+Left Shift+Control_L+Right Control_L+b Right
+    Format Word Italic: Control_L+Left Shift+Control_L+Right Control_L+i Right
+    Format Word Underline: Control_L+Left Shift+Control_L+Right Control_L+u Right
+  code-oss:
+    sugereNcias: Control+period
+  jetbrains-idea:
+    run (X): Alt_L+Shift+x
+    lugares (I): Control+Shift+e
+    atras (O): Control+h
+    adelante (E): Control+l
+    tab_anterior (U): Control+j
+    tab_siguiente (A): Control+k
+    goto_declaration (G): Control+b
+    close_tab (F): Control+F4
