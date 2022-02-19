@@ -56,6 +56,17 @@ unittest(shift_mode_can_be_used_to_write_in_uppercase) {
   assertEqual("U", keyset.getWrittenText());
 }
 
+unittest(shift_mode_works_for_one_character_only) {
+  KeysetSimulator keyset;
+  keyset.start();
+
+  keyset.chord({ 1, 2, 3 });
+  keyset.chord({ 5 });
+  keyset.chord({ 5 });
+
+  assertEqual("Uu", keyset.getWrittenText());
+}
+
 unittest(shift_led_turns_on_when_in_shift_mode) {
   KeysetSimulator keyset;
   keyset.start();

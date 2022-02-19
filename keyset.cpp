@@ -225,6 +225,8 @@ void Keyset::processChord() {
     currentMode += 1;
     currentMode %= numberOfKeymaps
       + 1 /* consider log currentMode*/;
+  } else {
+    shiftActivated = false;
   }
   clearPressedKeys();
 }
