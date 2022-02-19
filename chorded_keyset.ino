@@ -1,4 +1,5 @@
 #include <Keyboard.h>
+#include <ArduinoJson.h>
 #include "keyset.h"
 
 const int keyPins[5] = {6, 5, 4, 3, 2};

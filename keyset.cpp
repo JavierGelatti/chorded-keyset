@@ -1,5 +1,6 @@
 #include <limits.h>
 #include <Arduino.h>
+#include <ArduinoJson.h>
 #include "keyset.h"
 #include "bit_manipulation.h"
 

@@ -1,6 +1,24 @@
+platforms:
+  pro_micro: # Based off of https://github.com/Arduino-CI/arduino_ci/blob/21b63e6609d07d0c6391a0d02ed7db8092ad9867/misc/default.yml#L84-L95
+    board: arduino:avr:leonardo
+    package: arduino:avr
+    gcc:
+      features:
+      defines:
+        - __AVR__
+        - __AVR_ATmega32U4__
+        - ARDUINO_ARCH_AVR
+        - ARDUINO_AVR_LEONARDO
+        - ARDUINOJSON_ENABLE_STD_STRING=1
+        - ARDUINOJSON_ENABLE_ARDUINO_STRING=0
+      warnings:
+      flags:
+
 unittest:
   platforms:
-    - leonardo
+    - pro_micro
+  libraries:
+    - "ArduinoJson"
   testfiles:
     select:
       - "*test.cpp"
