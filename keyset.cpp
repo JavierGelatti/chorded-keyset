@@ -155,9 +155,6 @@ void Keyset::keysetSetup() {
     pinMode(modeLeds[i], OUTPUT);
   }
   pinMode(shiftLed, OUTPUT);
-  for (int i = 0; i < numSwitch; i++) {
-    //pinMode(switchPins[i], INPUT_PULLUP);
-  }
 }
 
 void Keyset::keysetLoop() {
@@ -204,10 +201,6 @@ long Keyset::ellapsedTimeFrom(long milliseconds) {
   return millis() - milliseconds;
 }
 
-bool Keyset::isInLeftHandMode() {
-  return true;//digitalRead(switchPins[0]) == HIGH;
-}
-
 char Keyset::chordedCharacter() {
   int keymapIndex = isInLogMode() ? 0 : currentMode;
   char pressedChar = keymaps[keymapIndex]->pressedCharFor(pressedKeys);
@@ -242,7 +235,7 @@ void Keyset::loopWithDelayForPress() {
     if (isBeingPressed(keyPin)) {
       setBit(
         pressedKeys,
-        isInLeftHandMode() ? keyPinIndex : numKeys - 1 - keyPinIndex
+        keyPinIndex // for right hand: numKeys - 1 - keyPinIndex
       );
       lastPressedKeyTimestamp = millis();
       nothingPressed = false;
@@ -258,13 +251,11 @@ Keyset::Keyset(
   const int (&keyPins)[numKeys],
   const int (&modeLeds)[numModeLeds],
   const int shiftLed,
-  const int (&switchPins)[numSwitch],
   const std::function<void(char)> keyboardWrite,
   const std::function<void(const char*)> logEvent
 ) : // We initialize the arrays like this to avoid an "array as initializer" error
   keyPins{keyPins[0], keyPins[1], keyPins[2], keyPins[3], keyPins[4]},
   modeLeds{modeLeds[0], modeLeds[1], modeLeds[2]},
-  switchPins{switchPins[0], switchPins[1]},
   shiftLed(shiftLed),
   keyboardWrite(keyboardWrite),
   logEvent(logEvent)

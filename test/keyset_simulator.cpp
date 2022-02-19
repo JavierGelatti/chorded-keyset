@@ -6,13 +6,12 @@
 const int keyPins[5] = {3, 2, 4, 6, 5};
 const int modeLeds[3] = {15, 14, 16};
 const int shiftLed = 10;
-const int switchPins[2] = {9, 8};
 
 class KeysetSimulator {
   public:
   KeysetSimulator() {
     this->keyset = new Keyset(
-      keyPins, modeLeds, shiftLed, switchPins,
+      keyPins, modeLeds, shiftLed,
       [&](char pressedChar) {
         writtenText += pressedChar;
       },
@@ -25,10 +24,6 @@ class KeysetSimulator {
     this->boardState = GODMODE();
     for (int i = 0; i < numKeys; i++) {
       this->boardState->digitalPin[keyPins[i]] = HIGH;
-    }
-
-    for (int i = 0; i < numSwitch; i++) {
-      this->boardState->digitalPin[switchPins[i]] = HIGH;
     }
   }
   ~KeysetSimulator() {
@@ -84,14 +79,6 @@ class KeysetSimulator {
 
     assert(("No mode led is turned on", mode != -1));
     return mode;
-  }
-
-  void turnOnRightHandMode() {
-    boardState->digitalPin[switchPins[0]] = LOW;
-  }
-
-  bool inLeftHandMode() {
-    return boardState->digitalPin[switchPins[0]] == HIGH;
   }
 
   String getLog() {

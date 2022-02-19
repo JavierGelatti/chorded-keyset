@@ -56,7 +56,6 @@ namespace std {
 
 #define numKeys 5
 #define numModeLeds 3
-#define numSwitch 2
 #define maxNumberOfModes 8
 
 class Keymap;
@@ -67,7 +66,6 @@ class Keyset {
     const int (&keyPins)[numKeys],
     const int (&modeLeds)[numModeLeds],
     const int shiftLed,
-    const int (&switchPins)[numSwitch],
     const std::function<void(char)> keyboardWrite,
     const std::function<void(const char*)> logEvent
   );
@@ -88,7 +86,6 @@ class Keyset {
   void loopWithDelayForPress();
   void processChord();
   char chordedCharacter();
-  bool isInLeftHandMode();
   bool isInLogMode();
 
   private:
@@ -103,7 +100,6 @@ class Keyset {
   int currentMode;
   const int modeLeds[numModeLeds];
   const int shiftLed;
-  const int switchPins[numSwitch];
 
   int numberOfKeymaps;
   Keymap* keymaps[maxNumberOfModes];

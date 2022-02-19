@@ -4,10 +4,9 @@
 const int keyPins[5] = {6, 5, 4, 3, 2};
 const int modeLeds[3] = {15, 14, 16};
 const int shiftLed = 10;
-const int switchPins[2] = {9, 8};
 
 Keyset keyset(
-  keyPins, modeLeds, shiftLed, switchPins,
+  keyPins, modeLeds, shiftLed,
   [](char pressedChar) {
     Keyboard.write(pressedChar);
   },
