@@ -156,7 +156,7 @@ void Keyset::keysetSetup() {
   }
   pinMode(shiftLed, OUTPUT);
   for (int i = 0; i < numSwitch; i++) {
-    pinMode(switchPins[i], INPUT_PULLUP);
+    //pinMode(switchPins[i], INPUT_PULLUP);
   }
 }
 
@@ -205,7 +205,7 @@ long Keyset::ellapsedTimeFrom(long milliseconds) {
 }
 
 bool Keyset::isInLeftHandMode() {
-  return digitalRead(switchPins[0]) == HIGH;
+  return true;//digitalRead(switchPins[0]) == HIGH;
 }
 
 char Keyset::chordedCharacter() {
