@@ -118,4 +118,44 @@ unittest(can_switch_to_log_mode) {
   assertEqual("", keyset.getWrittenText());
 }
 
+unittest(switches_to_log_mode_from_command) {
+  KeysetSimulator keyset;
+  keyset.start();
+
+  keyset.receiveCommand("log_mode");
+
+  assertEqual(3, keyset.currentMode());
+}
+
+unittest(switches_to_normal_mode_from_command) {
+  KeysetSimulator keyset;
+  keyset.start();
+  keyset.receiveCommand("log_mode");
+
+  keyset.receiveCommand("normal_mode");
+
+  assertEqual(1, keyset.currentMode());
+}
+
+unittest(ignores_unknown_commands) {
+  KeysetSimulator keyset;
+  keyset.start();
+
+  keyset.receiveCommand("unknown_command");
+
+  // The mode does not change
+  assertEqual(1, keyset.currentMode());
+}
+
+unittest(reports_state_when_asked) {
+  KeysetSimulator keyset;
+  keyset.start();
+
+  keyset.receiveCommand("query_state");
+
+  auto response = keyset.lastResponse();
+
+  assertEqual(0, response["mode"]);
+}
+
 unittest_main()

@@ -1,4 +1,6 @@
 #include "../keyset.h"
+#include <ArduinoJson.h>
+#include "../json_utils.h"
 #include <Godmode.h>
 #include <cassert>
 #include <initializer_list>
@@ -83,6 +85,31 @@ class KeysetSimulator {
 
   String getLog() {
     return eventLog;
+  }
+
+  void receiveCommand(string commandName) {
+    StaticJsonDocument<200> commandDocument;
+    commandDocument["command"] = commandName;
+
+    boardState->serialPort[0].dataIn = serializeJson(commandDocument) + "\n";
+
+    keyset->keysetLoop();
+  }
+
+  StaticJsonDocument<200> lastResponse() {
+    StaticJsonDocument<200> responseDocument;
+
+    String sentData = boardState->serialPort[0].dataOut;
+    assert(("No data was sent!", sentData != ""));
+    assert(("Sent data has missing ending newline", sentData.endsWith("\n")));
+
+    String sentDataWithoutEndingNewline = sentData.substring(0, sentData.length() - 1);
+    String lastResponseData = sentData.substring(sentDataWithoutEndingNewline.lastIndexOf("/n") + 1);
+
+    DeserializationError error = deserializeJson(responseDocument, lastResponseData);
+    assert(("Sent data is not JSON!", !error));
+
+    return responseDocument;
   }
 
   private:

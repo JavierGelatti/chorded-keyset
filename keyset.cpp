@@ -3,8 +3,11 @@
 #include <ArduinoJson.h>
 #include "keyset.h"
 #include "bit_manipulation.h"
+#include "json_utils.h"
 
 #define forindex(i, arraySize) for (int i = 0; i < arraySize; i++)
+
+String readLine();
 
 class Keymap {
   private:
@@ -160,6 +163,7 @@ void Keyset::keysetSetup() {
 
 void Keyset::keysetLoop() {
   loopWithDelayForPress();
+  processIncomingCommand();
 
   for (int i = 0; i < numModeLeds; i++) {
     digitalWrite(modeLeds[i], currentMode == i ? HIGH : LOW);
@@ -225,7 +229,7 @@ void Keyset::processChord() {
   } else if (pressedKeys == switchMode) {
     currentMode += 1;
     currentMode %= numberOfKeymaps
-      + 1 /* consider log currentMode*/;
+      + 1 /* consider log currentMode */;
   } else {
     shiftActivated = false;
   }
@@ -248,6 +252,45 @@ void Keyset::loopWithDelayForPress() {
   if (nothingPressed && pressedKeys != 0) {
     processChord();
   }
+}
+
+void Keyset::processIncomingCommand() {
+  String commandString = readLine();
+  if (commandString == "") return;
+
+  StaticJsonDocument<200> commandDocument;
+  DeserializationError error = deserializeJson(commandDocument, commandString);
+  if (error) {
+    // TODO: Report the error as JSON
+    Serial.print("JSON parsing error: ");
+    Serial.println(error.f_str());
+
+    return;
+  }
+
+  String commandName = String((const char*) commandDocument["command"]);
+  if (commandName == "log_mode") {
+    currentMode = 2;
+  } else if (commandName == "normal_mode") {
+    currentMode = 0;
+  } else if (commandName == "query_state") {
+    StaticJsonDocument<200> responseDocument;
+    responseDocument["mode"] = currentMode;
+    Serial.println(serializeJson(responseDocument));
+  }
+}
+
+String readLine() {
+  String receivedLine = "";
+
+  while (Serial.available()) {
+    char readChar = Serial.read();
+    if (readChar == '\n') break;
+
+    receivedLine += readChar;
+  }
+
+  return receivedLine;
 }
 
 Keyset::Keyset(

@@ -84,6 +84,7 @@ class Keyset {
   bool wasPressed(int keyIndex);
   long ellapsedTimeFrom(long milliseconds);
   void loopWithDelayForPress();
+  void processIncomingCommand();
   void processChord();
   char chordedCharacter();
   bool isInLogMode();
